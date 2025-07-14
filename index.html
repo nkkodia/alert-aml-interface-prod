@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AML Alert Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Configuration Tailwind CSS personnalisée
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#1e3a8a',
+                        danger: '#dc2626',
+                        warning: '#f59e0b',
+                        success: '#10b981',
+                        info: '#3b82f6'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        /* Styles personnalisés pour les effets de survol et la barre latérale */
+        .alert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: absolute;
+                z-index: 50;
+                height: 100vh;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .chart-container {
+            height: 300px;
+        }
+        /* Styles pour le message de chargement (maintenant caché par défaut) */
+        #loadingOverlay {
+            display: none; /* MODIFIÉ: Caché par défaut */
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #1e40af;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Overlay de chargement (maintenant caché par défaut) -->
+    <div id="loadingOverlay" class="hidden">
+        <div class="spinner"></div>
+        <p class="ml-3 text-lg text-primary">Chargement...</p>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 border-r border-gray-200 flex flex-col">
+            <div class="p-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-primary flex items-center">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    AML Alert System
+                </h1>
+            </div>
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <div class="mb-6">
+                        <h2 class="text-xs uppercase font-semibold text-gray-500 mb-2">Main</h2>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-blue-50 text-primary">
+                            <i class="fas fa-tachometer-alt mr-3 text-primary"></i>
+                            Dashboard
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1">
+                            <i class="fas fa-bell mr-3 text-gray-500"></i>
+                            Alerts
+                        </a>
+                    </div>
+                    <div class="mb-6">
+                        <h2 class="text-xs uppercase font-semibold text-gray-500 mb-2">Reports</h2>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-chart-bar mr-3 text-gray-500"></i>
+                            Statistics
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1">
+                            <i class="fas fa-file-export mr-3 text-gray-500"></i>
+                            Exports
+                        </a>
+                    </div>
+                    <div>
+                        <h2 class="text-xs uppercase font-semibold text-gray-500 mb-2">Settings</h2>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-cog mr-3 text-gray-500"></i>
+                            Configuration
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1">
+                            <i class="fas fa-users mr-3 text-gray-500"></i>
+                            Users
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center">
+                    <img class="w-8 h-8 rounded-full" src="https://placehold.co/32x32/cccccc/333333?text=JS" alt="User profile">
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-700">Jane Smith</p>
+                        <p class="text-xs text-gray-500">Compliance Officer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top navigation -->
+            <header class="bg-white border-b border-gray-200 flex items-center justify-between p-4">
+                <div class="flex items-center">
+                    <button id="sidebarToggle" class="md:hidden mr-4 text-gray-500">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 class="text-lg font-semibold text-gray-800">AML Alert Dashboard</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell"></i>
+                        <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main content area -->
+            <main class="flex-1 overflow-y-auto p-4">
+                <!-- Summary cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Total Alerts</p>
+                                <p id="totalAlerts" class="text-2xl font-bold text-primary">0</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-blue-100 text-primary">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">+12% from last week</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Open Alerts</p>
+                                <p id="openAlerts" class="text-2xl font-bold text-warning">0</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-yellow-100 text-warning">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">+5 from yesterday</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">False Positives</p>
+                                <p id="falsePositives" class="text-2xl font-bold text-danger">0</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-red-100 text-danger">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">10% of total alerts</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Avg Resolution Time</p>
+                                <p id="avgResolutionTime" class="text-2xl font-bold text-success">0</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-green-100 text-success">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Days per alert</p>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-800">Alerts by Type</h3>
+                            <select class="text-xs border border-gray-300 rounded px-2 py-1">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                            </select>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="alertsByTypeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-800">Alerts by Status</h3>
+                            <select class="text-xs border border-gray-300 rounded px-2 py-1">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                            </select>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="alertsByStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent alerts -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="font-medium text-gray-800">Recent Alerts</h3>
+                        <div class="flex space-x-2">
+                            <select id="filterStatus" class="text-xs border border-gray-300 rounded px-2 py-1">
+                                <option value="">All Status</option>
+                                <option value="Ouverte">Open</option>
+                                <option value="En cours de traitement">In Progress</option>
+                                <option value="Fermée - Vrai positif">Resolved</option>
+                                <option value="Fermée - Faux positif">False Positive</option>
+                            </select>
+                            <select id="filterClient" class="text-xs border border-gray-300 rounded px-2 py-1">
+                                <option value="">All Clients</option>
+                                <option value="Bijouterie">Bijouterie</option>
+                                <option value="ESN">ESN</option>
+                                <option value="Fringues">Fringues</option>
+                            </select>
+                            <button id="filterButton" class="text-xs bg-primary text-white px-3 py-1 rounded hover:bg-secondary">
+                                <i class="fas fa-filter mr-1"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" data-sort-by="dateAlerte">Date <i class="fas fa-sort text-gray-400"></i></th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" data-sort-by="clientCabinetName">Client <i class="fas fa-sort text-gray-400"></i></th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Counterparty</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alertsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Alert rows will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button id="prevPageMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </button>
+                            <button id="nextPageMobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </button>
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Showing <span id="currentPageStart" class="font-medium">0</span> to <span id="currentPageEnd" class="font-medium">0</span> of <span id="totalResults" class="font-medium">0</span> results
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <button id="prevPage" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">Previous</span>
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <!-- Page numbers will be generated here -->
+                                    <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">Next</span>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Alert Detail Modal (hidden by default) -->
+    <div id="alertModal" class="fixed inset-0 overflow-y-auto hidden z-50">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Alert Details: <span id="modalAlertId"></span>
+                                </h3>
+                                <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModal">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-2">Alert Information</h4>
+                                        <div class="space-y-2">
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Date:</span> <span id="modalDate"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Client:</span> <span id="modalClientName"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Type:</span> <span id="modalType"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Status:</span> 
+                                                <span id="modalStatusBadge"></span>
+                                            </p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Source:</span> <span id="modalSource"></span></p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-800 mb-2">Counterparty Details</h4>
+                                        <div class="space-y-2">
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Name:</span> <span id="modalCounterpartyName"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Country:</span> <span id="modalCountry"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Type:</span> <span id="modalCounterpartyType"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Match Reason:</span> <span id="modalMatchReason"></span></p>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Reference:</span> <span id="modalReference"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h4 class="font-medium text-gray-800 mb-2">Alert History</h4>
+                                    <div id="modalAlertHistory" class="space-y-3">
+                                        <!-- History items will be injected here -->
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h4 class="font-medium text-gray-800 mb-2">Comments</h4>
+                                    <div id="modalComments" class="space-y-3 mb-4">
+                                        <!-- Comments will be injected here -->
+                                    </div>
+                                    <div>
+                                        <label for="newComment" class="block text-sm font-medium text-gray-700">Add Comment</label>
+                                        <div class="mt-1">
+                                            <textarea id="newComment" name="newComment" rows="3" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="saveChangesBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+                        Save Changes
+                    </button>
+                    <select id="changeStatusSelect" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        <option value="">Change Status</option>
+                        <option value="Ouverte">Open</option>
+                        <option value="En cours de traitement">In Progress</option>
+                        <option value="Fermée - Vrai positif">Resolved</option>
+                        <option value="Fermée - Faux positif">False Positive</option>
+                    </select>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="cancelModal">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Données mockées pour simuler l'API
+        let mockAlertsData = [
+            {
+                id: 101,
+                tiersId: "CLIENT_001",
+                clientCabinetName: "Bijouterie",
+                nomTiers: "Dupont",
+                prenomTiers: "Jean",
+                denominationSocialeTiers: null,
+                typeAlerte: "Sanction",
+                sourceCorrespondance: "OFAC",
+                detailsCorrespondance: "Nom et Prénom exacts",
+                dateAlerte: "2025-07-14T10:30:00Z",
+                statutAlerte: "Ouverte",
+                gradeEnCharge: "Conformité",
+                bloquant: true,
+                commentairesTraitement: "Première alerte système."
+            },
+            {
+                id: 102,
+                tiersId: "FOURNISSEUR_005",
+                clientCabinetName: "ESN",
+                nomTiers: null,
+                prenomTiers: null,
+                denominationSocialeTiers: "CyberSec Solutions",
+                typeAlerte: "PaysNonCooperant",
+                sourceCorrespondance: "Pays X",
+                detailsCorrespondance: "Pays non coopérant",
+                dateAlerte: "2025-07-14T09:15:00Z",
+                statutAlerte: "En cours de traitement",
+                gradeEnCharge: "Associé Superviseur",
+                bloquant: false,
+                commentairesTraitement: "Vérification manuelle en cours."
+            },
+            {
+                id: 103,
+                tiersId: "CLIENT_002",
+                clientCabinetName: "Fringues",
+                nomTiers: "Martin",
+                prenomTiers: "Sophie",
+                denominationSocialeTiers: null,
+                typeAlerte: "PEP",
+                sourceCorrespondance: "Base PEP Locale",
+                detailsCorrespondance: "Personne Politiquement Exposée",
+                dateAlerte: "2025-07-13T18:00:00Z",
+                statutAlerte: "Ouverte",
+                gradeEnCharge: "Conformité",
+                bloquant: false,
+                commentairesTraitement: "Nécessite une diligence raisonnable renforcée."
+            },
+            {
+                id: 104,
+                tiersId: "FOURNISSEUR_001",
+                clientCabinetName: "Bijouterie",
+                nomTiers: "Gomez",
+                prenomTiers: "Carlos",
+                denominationSocialeTiers: null,
+                typeAlerte: "Sanction",
+                sourceCorrespondance: "ONU",
+                detailsCorrespondance: "Nom partiel",
+                dateAlerte: "2025-07-13T10:00:00Z",
+                statutAlerte: "Fermée - Faux positif",
+                gradeEnCharge: "Conformité",
+                bloquant: true,
+                commentairesTraitement: "Faux positif, nom similaire mais autres identifiants ne correspondent pas."
+            },
+            {
+                id: 105,
+                tiersId: "CLIENT_003",
+                clientCabinetName: "ESN",
+                nomTiers: null,
+                prenomTiers: null,
+                denominationSocialeTiers: "Global Tech Solutions",
+                typeAlerte: "PaysNonCooperant",
+                sourceCorrespondance: "Pays Y",
+                detailsCorrespondance: "Siège social dans pays non coopérant",
+                dateAlerte: "2025-07-12T14:00:00Z",
+                statutAlerte: "Ouverte",
+                gradeEnCharge: "Associé Superviseur",
+                bloquant: false,
+                commentairesTraitement: null
+            },
+            {
+                id: 106,
+                tiersId: "FOURNISSEUR_002",
+                clientCabinetName: "Fringues",
+                nomTiers: "Dubois",
+                prenomTiers: "Paul",
+                denominationSocialeTiers: null,
+                typeAlerte: "PEP",
+                sourceCorrespondance: "Base PEP Nationale",
+                detailsCorrespondance: "Lien familial avec un PEP",
+                dateAlerte: "2025-07-12T09:00:00Z",
+                statutAlerte: "Fermée - Vrai positif",
+                gradeEnCharge: "Conformité",
+                bloquant: false,
+                commentairesTraitement: "Validé comme vrai positif, mesures d'atténuation appliquées."
+            }
+        ];
+
+        // Fonction utilitaire pour simuler un délai réseau
+        function simulateNetworkDelay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // --- Fonctions API Mockées ---
+
+        /**
+         * Simule l'appel GET /api/alerts
+         * @param {object} params - Paramètres de requête (clientId, status, page, size, sortBy, sortDir)
+         * @returns {Promise<object>} - Une promesse qui résout avec les données paginées des alertes
+         */
+        async function mockFetchAlerts(params) {
+            // showLoading(); // RETIRÉ
+            await simulateNetworkDelay(500); // Simule 500ms de latence
+
+            let filteredAlerts = [...mockAlertsData];
+
+            // Filtrage
+            if (params.clientId) {
+                filteredAlerts = filteredAlerts.filter(alert => alert.clientCabinetName === params.clientId);
+            }
+            if (params.status) {
+                filteredAlerts = filteredAlerts.filter(alert => alert.statutAlerte === params.status);
+            }
+
+            // Tri
+            const sortBy = params.sortBy || 'dateAlerte';
+            const sortDir = params.sortDir === 'asc' ? 1 : -1;
+            filteredAlerts.sort((a, b) => {
+                const valA = a[sortBy];
+                const valB = b[sortBy];
+                if (valA < valB) return -1 * sortDir;
+                if (valA > valB) return 1 * sortDir;
+                return 0;
+            });
+
+            // Pagination
+            const page = params.page || 0;
+            const size = params.size || 10;
+            const startIndex = page * size;
+            const endIndex = startIndex + size;
+            const content = filteredAlerts.slice(startIndex, endIndex);
+
+            // hideLoading(); // RETIRÉ
+            return {
+                content: content,
+                pageable: {
+                    pageNumber: page,
+                    pageSize: size,
+                },
+                last: endIndex >= filteredAlerts.length,
+                totalPages: Math.ceil(filteredAlerts.length / size),
+                totalElements: filteredAlerts.length,
+                size: size,
+                number: page,
+                first: startIndex === 0,
+                numberOfElements: content.length,
+                empty: content.length === 0
+            };
+        }
+
+        /**
+         * Simule l'appel GET /api/alerts/{alertId}
+         * @param {number} alertId - L'ID de l'alerte
+         * @returns {Promise<object>} - Une promesse qui résout avec les détails de l'alerte ou rejette si non trouvée
+         */
+        async function mockFetchAlertDetails(alertId) {
+            // showLoading(); // RETIRÉ
+            await simulateNetworkDelay(300); // Simule 300ms de latence
+
+            const alert = mockAlertsData.find(a => a.id === alertId);
+            // hideLoading(); // RETIRÉ
+            if (alert) {
+                return alert;
+            } else {
+                throw new Error(`Alerte avec l'ID ${alertId} non trouvée.`);
+            }
+        }
+
+        /**
+         * Simule l'appel PUT /api/alerts/{alertId}/status
+         * @param {number} alertId - L'ID de l'alerte
+         * @param {string} newStatus - Le nouveau statut
+         * @param {string} comments - Les commentaires
+         * @returns {Promise<object>} - Une promesse qui résout avec l'alerte mise à jour
+         */
+        async function mockUpdateAlertStatus(alertId, newStatus, comments) {
+            // showLoading(); // RETIRÉ
+            await simulateNetworkDelay(700); // Simule 700ms de latence
+
+            const alertIndex = mockAlertsData.findIndex(a => a.id === alertId);
+            if (alertIndex > -1) {
+                const updatedAlert = { ...mockAlertsData[alertIndex], statutAlerte: newStatus };
+                if (comments) {
+                    updatedAlert.commentairesTraitement = (updatedAlert.commentairesTraitement ? updatedAlert.commentairesTraitement + "\n" : "") + `[${new Date().toISOString().slice(0, 16).replace('T', ' ')}] ${comments}`;
+                }
+                mockAlertsData[alertIndex] = updatedAlert;
+                // hideLoading(); // RETIRÉ
+                return updatedAlert;
+            } else {
+                // hideLoading(); // RETIRÉ
+                throw new Error(`Alerte avec l'ID ${alertId} non trouvée pour mise à jour.`);
+            }
+        }
+
+        // --- Fonctions d'aide UI (showLoading/hideLoading sont maintenant vides) ---
+
+        function showLoading() {
+            // document.getElementById('loadingOverlay').classList.remove('hidden'); // RETIRÉ
+        }
+
+        function hideLoading() {
+            // document.getElementById('loadingOverlay').classList.add('hidden'); // RETIRÉ
+        }
+
+        function getStatusBadgeHtml(status) {
+            let colorClass = 'bg-gray-100 text-gray-800';
+            switch (status) {
+                case 'Ouverte': colorClass = 'bg-yellow-100 text-yellow-800'; break;
+                case 'En cours de traitement': colorClass = 'bg-blue-100 text-blue-800'; break;
+                case 'Fermée - Vrai positif': colorClass = 'bg-green-100 text-green-800'; break;
+                case 'Fermée - Faux positif': colorClass = 'bg-gray-100 text-gray-800'; break;
+                case 'Sanction': colorClass = 'bg-red-100 text-red-800'; break;
+                case 'PEP': colorClass = 'bg-purple-100 text-purple-800'; break;
+                case 'PaysNonCooperant': colorClass = 'bg-orange-100 text-orange-800'; break;
+            }
+            return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}">${status}</span>`;
+        }
+
+        function renderAlertsTable(alertsContent) {
+            const tableBody = document.getElementById('alertsTableBody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            if (alertsContent.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Aucune alerte trouvée.</td></tr>`;
+                return;
+            }
+
+            alertsContent.forEach(alert => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${alert.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(alert.dateAlerte).toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${alert.clientCabinetName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${alert.nomTiers || alert.denominationSocialeTiers || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getStatusBadgeHtml(alert.typeAlerte)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getStatusBadgeHtml(alert.statutAlerte)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button class="text-primary hover:text-secondary mr-2 view-alert-btn" data-alert-id="${alert.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-green-600 hover:text-green-800 edit-alert-btn" data-alert-id="${alert.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to new buttons
+            document.querySelectorAll('.view-alert-btn').forEach(button => {
+                button.addEventListener('click', (e) => openAlertModal(parseInt(e.currentTarget.dataset.alertId)));
+            });
+            document.querySelectorAll('.edit-alert-btn').forEach(button => {
+                button.addEventListener('click', (e) => openAlertModal(parseInt(e.currentTarget.dataset.alertId)));
+            });
+        }
+
+        function updatePagination(pageable, totalElements) {
+            const currentPageStart = document.getElementById('currentPageStart');
+            const currentPageEnd = document.getElementById('currentPageEnd');
+            const totalResults = document.getElementById('totalResults');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const prevPageMobileBtn = document.getElementById('prevPageMobile');
+            const nextPageMobileBtn = document.getElementById('nextPageMobile');
+
+            const start = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
+            const end = Math.min(start + pageable.pageSize - 1, totalElements);
+
+            currentPageStart.textContent = start;
+            currentPageEnd.textContent = end;
+            totalResults.textContent = totalElements;
+
+            prevPageBtn.disabled = pageable.pageNumber === 0;
+            prevPageMobileBtn.disabled = pageable.pageNumber === 0;
+            nextPageBtn.disabled = pageable.last;
+            nextPageMobileBtn.disabled = pageable.last;
+        }
+
+        function updateSummaryCards(alerts) {
+            document.getElementById('totalAlerts').textContent = alerts.length;
+            document.getElementById('openAlerts').textContent = alerts.filter(a => a.statutAlerte === 'Ouverte').length;
+            document.getElementById('falsePositives').textContent = alerts.filter(a => a.statutAlerte === 'Fermée - Faux positif').length;
+            // Calcul simplifié pour Avg Resolution Time (nécessiterait plus de données réelles)
+            document.getElementById('avgResolutionTime').textContent = (alerts.filter(a => a.statutAlerte.startsWith('Fermée')).length > 0 ? (Math.random() * 5 + 1).toFixed(1) : 'N/A');
+
+            // Mise à jour des charts (à refaire avec des données réelles de l'API)
+            updateCharts(alerts);
+        }
+
+        function updateCharts(alerts) {
+            const typeCounts = { 'Sanction': 0, 'Non-Cooperative': 0, 'PEP': 0, 'Other': 0 };
+            const statusCounts = { 'Ouverte': 0, 'En cours de traitement': 0, 'Fermée - Vrai positif': 0, 'Fermée - Faux positif': 0 };
+
+            alerts.forEach(alert => {
+                if (typeCounts.hasOwnProperty(alert.typeAlerte)) {
+                    typeCounts[alert.typeAlerte]++;
+                } else {
+                    typeCounts['Other']++;
+                }
+
+                if (statusCounts.hasOwnProperty(alert.statutAlerte)) {
+                    statusCounts[alert.statutAlerte]++;
+                }
+            });
+
+            alertsByTypeChart.data.datasets[0].data = Object.values(typeCounts);
+            alertsByTypeChart.update();
+
+            alertsByStatusChart.data.datasets[0].data = Object.values(statusCounts);
+            alertsByStatusChart.update();
+        }
+
+        // --- Logique du Modal ---
+        let currentAlertId = null;
+
+        async function openAlertModal(alertId) {
+            try {
+                const alertDetails = await mockFetchAlertDetails(alertId);
+                currentAlertId = alertId;
+
+                document.getElementById('modalAlertId').textContent = alertDetails.id;
+                document.getElementById('modalDate').textContent = new Date(alertDetails.dateAlerte).toLocaleString();
+                document.getElementById('modalClientName').textContent = alertDetails.clientCabinetName;
+                document.getElementById('modalType').textContent = alertDetails.typeAlerte;
+                document.getElementById('modalStatusBadge').innerHTML = getStatusBadgeHtml(alertDetails.statutAlerte);
+                document.getElementById('modalSource').textContent = alertDetails.sourceCorrespondance;
+
+                document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
+                document.getElementById('modalCountry').textContent = 'N/A'; // Non présent dans le mock data actuel
+                document.getElementById('modalCounterpartyType').textContent = 'N/A'; // Non présent dans le mock data actuel
+                document.getElementById('modalMatchReason').textContent = alertDetails.detailsCorrespondance;
+                document.getElementById('modalReference').textContent = alertDetails.tiersId; // Utilisation de tiersId comme référence
+
+                // Historique et commentaires (simplifié pour le mock)
+                const modalAlertHistory = document.getElementById('modalAlertHistory');
+                modalAlertHistory.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 pt-1"><div class="h-2 w-2 rounded-full bg-gray-400"></div></div>
+                        <div class="ml-3">
+                            <p class="text-sm text-gray-700">Alert created by system</p>
+                            <p class="text-xs text-gray-500">${new Date(alertDetails.dateAlerte).toLocaleString()} by AML System</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 pt-1"><div class="h-2 w-2 rounded-full bg-blue-400"></div></div>
+                        <div class="ml-3">
+                            <p class="text-sm text-gray-700">Status changed to "${alertDetails.statutAlerte}"</p>
+                            <p class="text-xs text-gray-500">${new Date().toLocaleString()} by Jane Smith</p>
+                        </div>
+                    </div>
+                `;
+                
+                const modalComments = document.getElementById('modalComments');
+                modalComments.innerHTML = alertDetails.commentairesTraitement ? `
+                    <div class="bg-gray-50 p-3 rounded">
+                        <div class="flex justify-between">
+                            <p class="text-sm font-medium">System/User</p>
+                            <p class="text-xs text-gray-500">${new Date(alertDetails.dateAlerte).toLocaleString()}</p>
+                        </div>
+                        <p class="text-sm mt-1">${alertDetails.commentairesTraitement}</p>
+                    </div>
+                ` : '<p class="text-sm text-gray-500">Aucun commentaire.</p>';
+
+                document.getElementById('newComment').value = ''; // Clear new comment field
+                document.getElementById('changeStatusSelect').value = ''; // Reset status select
+
+                modal.classList.remove('hidden');
+            } catch (error) {
+                alert('Erreur lors du chargement de l\'alerte: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // --- Initialisation et Événements ---
+
+        let currentFilters = { page: 0, size: 10, sortBy: 'dateAlerte', sortDir: 'desc' };
+
+        async function loadAlerts() {
+            try {
+                const response = await mockFetchAlerts(currentFilters);
+                renderAlertsTable(response.content);
+                updatePagination(response.pageable, response.totalElements);
+                updateSummaryCards(mockAlertsData); // Update summary cards with all data, not just filtered page
+            } catch (error) {
+                alert('Erreur lors du chargement des alertes: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Pagination event listeners
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentFilters.page > 0) {
+                currentFilters.page--;
+                loadAlerts();
+            }
+        });
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentFilters.page++;
+            loadAlerts();
+        });
+        document.getElementById('prevPageMobile').addEventListener('click', () => {
+            if (currentFilters.page > 0) {
+                currentFilters.page--;
+                loadAlerts();
+            }
+        });
+        document.getElementById('nextPageMobile').addEventListener('click', () => {
+            currentFilters.page++;
+            loadAlerts();
+        });
+
+        // Filter event listener
+        document.getElementById('filterButton').addEventListener('click', () => {
+            currentFilters.clientId = document.getElementById('filterClient').value;
+            currentFilters.status = document.getElementById('filterStatus').value;
+            currentFilters.page = 0; // Reset to first page on filter change
+            loadAlerts();
+        });
+
+        // Sort event listeners
+        document.querySelectorAll('th[data-sort-by]').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortBy = header.dataset.sortBy;
+                if (currentFilters.sortBy === sortBy) {
+                    currentFilters.sortDir = currentFilters.sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentFilters.sortBy = sortBy;
+                    currentFilters.sortDir = 'desc'; // Default sort direction for new sort column
+                }
+                loadAlerts();
+            });
+        });
+
+        // Save Changes button in modal
+        document.getElementById('saveChangesBtn').addEventListener('click', async () => {
+            if (!currentAlertId) return;
+
+            const newCommentText = document.getElementById('newComment').value;
+            const newStatusValue = document.getElementById('changeStatusSelect').value;
+
+            if (!newCommentText && !newStatusValue) {
+                alert('Veuillez ajouter un commentaire ou changer le statut.');
+                return;
+            }
+
+            try {
+                const updatedAlert = await mockUpdateAlertStatus(currentAlertId, newStatusValue || mockAlertsData.find(a => a.id === currentAlertId).statutAlerte, newCommentText);
+                alert('Alerte mise à jour avec succès !');
+                modal.classList.add('hidden');
+                loadAlerts(); // Reload table to reflect changes
+            } catch (error) {
+                alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
+                console.error(error);
+            }
+        });
+
+        // Toggle sidebar on mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('alertModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelModal = document.getElementById('cancelModal');
+        
+        closeModal.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+        
+        cancelModal.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Initial load of alerts when the page is ready
+        document.addEventListener('DOMContentLoaded', loadAlerts);
+
+        // Charts (initialization moved to loadAlerts for dynamic data)
+        const alertsByTypeCtx = document.getElementById('alertsByTypeChart').getContext('2d');
+        const alertsByTypeChart = new Chart(alertsByTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sanctions', 'Non-Cooperative', 'PEP', 'Other'],
+                datasets: [{
+                    data: [], // Will be populated by updateCharts
+                    backgroundColor: [
+                        '#ef4444', // red
+                        '#f97316', // orange
+                        '#8b5cf6', // purple
+                        '#64748b'  // gray
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        const alertsByStatusCtx = document.getElementById('alertsByStatusChart').getContext('2d');
+        const alertsByStatusChart = new Chart(alertsByStatusCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Open', 'In Progress', 'Resolved', 'False Positive'],
+                datasets: [{
+                    label: 'Alerts',
+                    data: [], // Will be populated by updateCharts
+                    backgroundColor: [
+                        '#f59e0b', // yellow
+                        '#3b82f6', // blue
+                        '#10b981', // green
+                        '#64748b'  // gray
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
