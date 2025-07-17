@@ -49,9 +49,9 @@
         .chart-container {
             height: 300px;
         }
-        /* Styles pour le message de chargement (maintenant visible par défaut) */
+        /* Styles pour le message de chargement (maintenant caché par défaut) */
         #loadingOverlay {
-            display: flex; /* MODIFIÉ: Visible par défaut */
+            display: none; /* MODIFIÉ: Caché par défaut */
             align-items: center;
             justify-content: center;
             position: fixed;
@@ -76,8 +76,8 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- Overlay de chargement -->
-    <div id="loadingOverlay"> <!-- MODIFIÉ: 'hidden' retiré pour être contrôlé par JS -->
+    <!-- Overlay de chargement (maintenant caché par défaut) -->
+    <div id="loadingOverlay" class="hidden">
         <div class="spinner"></div>
         <p class="ml-3 text-lg text-primary">Chargement...</p>
     </div>
@@ -176,6 +176,7 @@
                                 <i class="fas fa-bell"></i>
                             </div>
                         </div>
+                        <p class="text-xs text-gray-500 mt-2">+12% from last week</p>
                     </div>
                     <div class="bg-white rounded-lg shadow p-4">
                         <div class="flex items-center justify-between">
@@ -187,6 +188,7 @@
                                 <i class="fas fa-exclamation-circle"></i>
                             </div>
                         </div>
+                        <p class="text-xs text-gray-500 mt-2">+5 from yesterday</p>
                     </div>
                     <div class="bg-white rounded-lg shadow p-4">
                         <div class="flex items-center justify-between">
@@ -576,22 +578,6 @@
             return await response.json();
         }
 
-        // NOUVELLE FONCTION: Appelle l'API POST /api/alerts/{alertId}/resend-email
-        async function resendAlertEmail(alertId) {
-            const url = `${API_BASE_URL}/api/alerts/${alertId}/resend-email`;
-            
-            const response = await fetch(url, {
-                method: 'POST'
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
-            }
-            return await response.text(); // Ou response.json() si le backend renvoie du JSON
-        }
-
-
         // --- Fonctions d'aide UI ---
 
         function getStatusBadgeHtml(status) {
@@ -716,13 +702,12 @@
                 document.getElementById('modalClientName').textContent = alertDetails.clientCabinetName;
                 document.getElementById('modalType').textContent = alertDetails.typeAlerte;
                 document.getElementById('modalStatusBadge').innerHTML = getStatusBadgeHtml(alertDetails.statutAlerte);
-                // MODIFIÉ: Utilise descriptionAlerte pour la source/détails
-                document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte; 
+                document.getElementById('modalSource').textContent = alertDetails.sourceCorrespondance;
 
                 document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
                 document.getElementById('modalCountry').textContent = 'N/A'; // Ce champ n'est pas directement dans l'objet Alerte de l'API
                 document.getElementById('modalCounterpartyType').textContent = 'N/A'; // Ce champ n'est pas directement dans l'objet Alerte de l'API
-                document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte; // Utilise descriptionAlerte pour la raison
+                document.getElementById('modalMatchReason').textContent = alertDetails.detailsCorrespondance;
                 document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb; // Utilisation de tiersIdClientDb comme référence
 
                 // Historique et commentaires (basé sur le champ commentairesTraitement de l'API)
@@ -781,6 +766,9 @@
                 const response = await fetchAlerts(currentFilters); // APPEL API RÉEL
                 renderAlertsTable(response.content);
                 updatePagination(response.pageable, response.totalElements);
+                // Pour les summary cards et charts, on a besoin de toutes les données si l'API ne fournit pas d'agrégats
+                // Pour un POC, on peut faire un appel séparé ou une logique plus complexe si nécessaire
+                // Pour l'instant, on va simuler les agrégats car l'API /alerts paginée ne donne pas le total non filtré
                 const allAlertsForSummary = await fetchAlerts({ size: 10000 }); // Récupère toutes les alertes pour les stats
                 updateSummaryCards(allAlertsForSummary.content); 
 
@@ -800,8 +788,7 @@
         document.getElementById('nextPage').addEventListener('click', () => {
             currentFilters.page++;
             loadAlerts();
-        }
-        );
+        });
         document.getElementById('prevPageMobile').addEventListener('click', () => {
             if (currentFilters.page > 0) {
                 currentFilters.page--;
@@ -857,24 +844,6 @@
                 console.error(error);
             }
         });
-
-        // NOUVEAU BOUTON: Renvoyer Mail
-        document.getElementById('resendEmailBtn').addEventListener('click', async () => {
-            if (!currentAlertId) return;
-
-            if (!confirm('Êtes-vous sûr de vouloir renvoyer l\'e-mail pour cette alerte ?')) {
-                return;
-            }
-
-            try {
-                const responseText = await resendAlertEmail(currentAlertId); // APPEL API RÉEL
-                alert('E-mail de renvoi : ' + responseText);
-            } catch (error) {
-                alert('Erreur lors du renvoi de l\'e-mail : ' + error.message);
-                console.error(error);
-            }
-        });
-
 
         // Toggle sidebar on mobile
         document.getElementById('sidebarToggle').addEventListener('click', function() {
