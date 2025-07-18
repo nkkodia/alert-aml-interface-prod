@@ -802,8 +802,8 @@
 
         // Filter event listener
         document.getElementById('filterButton').addEventListener('click', () => {
-            currentFilters.clientId = document.getElementById('filterClient').value;
-            currentFilters.status = document.getElementById('filterStatus').value;
+            currentFilters.clientCabinetName = document.getElementById('filterClient').value;
+            currentFilters.statutAlerte = document.getElementById('filterStatus').value;
             currentFilters.page = 0; // Reset to first page on filter change
             loadAlerts();
         });
