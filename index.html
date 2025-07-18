@@ -482,7 +482,6 @@
         const API_BASE_URL = "https://alert-aml-admin.onrender.com";
 
         // Déclaration globale des variables de modale, de graphiques et de filtres
-        // Ces variables seront assignées plus tard une fois le DOM chargé.
         let modal = null;
         let closeModal = null;
         let cancelModal = null;
@@ -491,9 +490,9 @@
         let saveChangesBtn = null;
         let resendEmailBtn = null;
 
-        let currentAlertId = null; // Variable pour stocker l'ID de l'alerte actuellement ouverte dans la modale
-        let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' }; // Filtres pour les alertes. Taille de page ajustée pour voir la pagination.
-        let currentEmailLogFilters = { page: 0, size: 5 }; // Filtres pour les logs d'email. Taille de page ajustée.
+        let currentAlertId = null;
+        let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' };
+        let currentEmailLogFilters = { page: 0, size: 5 };
 
 
         // --- Fonctions d'affichage/masquage du loader ---
@@ -583,7 +582,7 @@
                 totalElements: totalElements,
                 totalPages: totalPages,
                 last: params.page >= totalPages - 1
-            }), 300)); // Délai de 300ms pour simuler un chargement réseau
+            }), 300));
         }
 
         async function fetchAlertDetails(alertId) {
@@ -762,16 +761,14 @@
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
 
-            // Logique pour afficher/masquer la pagination si moins d'éléments que la taille de la page
             const paginationControls = document.querySelector('#alertsSection .px-4.py-3.bg-gray-50');
             if (paginationControls) {
-                if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) { // Si total <= pageSize et sur la première page
-                    paginationControls.classList.add('hidden'); // Masquer
+                if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) {
+                    paginationControls.classList.add('hidden');
                 } else {
-                    paginationControls.classList.remove('hidden'); // Afficher
+                    paginationControls.classList.remove('hidden');
                 }
             }
-
 
             if (pageNumbersContainer) {
                 pageNumbersContainer.innerHTML = '';
@@ -790,24 +787,22 @@
         }
 
         function updateSummaryCards(alerts) {
-            // Utilise les alertes fournies (qui devraient être toutes les alertes non paginées)
             document.getElementById('totalAlerts').textContent = alerts.length;
             document.getElementById('openAlerts').textContent = alerts.filter(a => a.statutAlerte === 'Ouverte').length;
             document.getElementById('falsePositives').textContent = alerts.filter(a => a.statutAlerte === 'Fermée - Faux positif').length;
 
             const resolvedAlerts = alerts.filter(a => a.statutAlerte.startsWith('Fermée'));
             if (resolvedAlerts.length > 0) {
-                // Simuler un temps de résolution moyen réaliste si tu n'as pas de données réelles
-                document.getElementById('avgResolutionTime').textContent = (Math.random() * 5 + 1).toFixed(1); // Ex: entre 1 et 6 jours
+                document.getElementById('avgResolutionTime').textContent = (Math.random() * 5 + 1).toFixed(1);
             } else {
                 document.getElementById('avgResolutionTime').textContent = 'N/A';
             }
 
-            updateCharts(alerts); // Passer toutes les alertes aux graphiques
+            updateCharts(alerts);
         }
 
         function loadAlerts() {
-            // Appel pour les alertes paginées (pour le tableau)
+            showLoading(); // Affiche le loader au début du chargement des alertes
             fetchAlerts(currentFilters)
                 .then(response => {
                     renderAlertsTable(response.content);
@@ -820,11 +815,12 @@
                     updateSummaryCards(fullAlertsResponse.content);
                 })
                 .catch(error => {
+                    // NE PAS afficher d'alerte disruptive, juste un log pour le débogage
                     console.error('Erreur lors du chargement des alertes:', error);
-                    alert('Erreur lors du chargement des alertes. Veuillez réessayer ou contacter le support.');
+                    console.warn("L'API réelle n'a pas pu être contactée. Affichage des données simulées.");
                 })
-                .finally(() => { // IMPORTANT: Le hideLoading final doit être ici
-                    hideLoading();
+                .finally(() => {
+                    hideLoading(); // Cache le loader une fois toutes les opérations de chargement terminées
                 });
         }
 
@@ -859,9 +855,6 @@
                 });
             } else { console.error("Element #alertsByStatusChart not found."); }
         }
-
-        // --- Logique du Modal ---
-        // (currentAlertId est déclaré globalement en haut)
 
         async function openAlertModal(alertId) {
             showLoading();
@@ -939,7 +932,7 @@
                     console.error("Modal element is not initialized.");
                 }
             } catch (error) {
-                alert('Erreur lors du chargement de l\'alerte: ' + error.message);
+                alert('Erreur lors du chargement de l\'alerte: ' + error.message); // Garder l'alerte ici pour les erreurs de modale spécifiques
                 console.error(error);
             } finally {
                 hideLoading();
@@ -947,12 +940,9 @@
         }
 
         // --- Logique Email Logs ---
-        // (currentEmailLogFilters est déclaré globalement en haut)
-
         async function fetchEmailLogs(params) {
             showLoading();
             const queryParams = new URLSearchParams(params).toString();
-            // REMPLACER PAR L'URL RÉELLE DE VOTRE API DE LOGS D'EMAIL
             const url = `${API_BASE_URL}/api/email-logs?${queryParams}`;
 
             try {
@@ -1003,7 +993,7 @@
                 totalElements: totalElements,
                 totalPages: totalPages,
                 last: params.page >= totalPages - 1
-            }), 300)); // Délai de 300ms pour simuler un chargement réseau
+            }), 300));
         }
 
         function renderEmailLogsTable(logs) {
@@ -1054,16 +1044,14 @@
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
 
-            // Logique pour afficher/masquer la pagination si moins d'éléments que la taille de la page
             const paginationControls = document.querySelector('#emailLogsSection .px-4.py-3.bg-gray-50');
             if (paginationControls) {
                 if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) {
-                    paginationControls.classList.add('hidden'); // Masquer
+                    paginationControls.classList.add('hidden');
                 } else {
-                    paginationControls.classList.remove('hidden'); // Afficher
+                    paginationControls.classList.remove('hidden');
                 }
             }
-
 
             if (pageNumbersContainer) {
                 pageNumbersContainer.innerHTML = '';
@@ -1082,36 +1070,33 @@
         }
 
         async function loadEmailLogs() {
+            showLoading(); // Affiche le loader au début du chargement des logs
             fetchEmailLogs(currentEmailLogFilters)
                 .then(response => {
                     renderEmailLogsTable(response.content);
                     updateEmailLogPagination(response.pageable, response.totalElements);
                 })
                 .catch(error => {
+                    // NE PAS afficher d'alerte disruptive, juste un log pour le débogage
                     console.error('Erreur lors du chargement des logs d\'e-mail:', error);
-                    alert('Erreur lors du chargement des logs d\'e-mail. Veuillez réessayer ou contacter le support.');
+                    console.warn("L'API réelle des logs d'e-mail n'a pas pu être contactée. Affichage des données simulées.");
                 })
-                .finally(() => { // IMPORTANT: Le hideLoading final doit être ici
-                    hideLoading();
+                .finally(() => {
+                    hideLoading(); // Cache le loader une fois toutes les opérations de chargement terminées
                 });
         }
 
 
         // --- Gestion des sections de contenu ---
         function showSection(sectionId) {
-            // Masquer toutes les sections
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-
-            // Afficher la section cible
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
             }
 
-
-            // Mettre à jour le titre principal
             const mainContentTitle = document.getElementById('mainContentTitle');
             if (mainContentTitle) {
                 if (sectionId === 'dashboardSection') {
@@ -1123,7 +1108,6 @@
                 }
             }
 
-            // Mettre à jour l'état actif dans la sidebar
             document.querySelectorAll('nav a').forEach(link => {
                 link.classList.remove('bg-blue-50', 'text-primary');
                 link.classList.add('text-gray-700', 'hover:bg-gray-100');
@@ -1135,11 +1119,10 @@
                 activeLink.classList.add('bg-blue-50', 'text-primary');
             }
 
-            // Recharger les données spécifiques à la section
             if (sectionId === 'alertsSection') {
-                loadAlerts(); // Recharger les alertes lorsque la section Alertes est affichée
+                loadAlerts();
             } else if (sectionId === 'emailLogsSection') {
-                loadEmailLogs(); // Recharger les logs d'e-mail lorsque la section Email Logs est affichée
+                loadEmailLogs();
             } else if (sectionId === 'dashboardSection') {
                  loadAlerts(); // Le dashboard utilise aussi les données d'alertes pour les cartes et graphiques
             }
@@ -1147,7 +1130,6 @@
 
         // --- Initialisation des écouteurs d'événements UI ---
         function initializeUIEventListeners() {
-            // Assigner les éléments DOM aux variables globales après que le DOM soit chargé
             modal = document.getElementById('alertModal');
             closeModal = document.getElementById('closeModal');
             cancelModal = document.getElementById('cancelModal');
@@ -1236,7 +1218,7 @@
                         const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText);
                         alert('Alerte mise à jour avec succès !');
                         if (modal) modal.classList.add('hidden');
-                        loadAlerts(); // Recharger les alertes après une modification
+                        loadAlerts();
                     } catch (error) {
                         alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
                         console.error(error);
@@ -1282,8 +1264,6 @@
                 });
             } else { console.error("Element #alertModal not found."); }
 
-
-            // Pagination email logs
             const prevEmailLogPageBtn = document.getElementById('prevEmailLogPage');
             if (prevEmailLogPageBtn) {
                 prevEmailLogPageBtn.addEventListener('click', () => {
@@ -1321,30 +1301,25 @@
             }
         }
 
-
-        // --- Code exécuté lorsque le DOM est entièrement chargé ---
         document.addEventListener('DOMContentLoaded', () => {
-            initializeCharts(); // 1. Initialiser les graphiques Chart.js
-            initializeUIEventListeners(); // 2. Initialiser les éléments UI et attacher les écouteurs
+            initializeCharts();
+            initializeUIEventListeners();
 
-            // 3. Configurer les écouteurs pour la navigation de la sidebar
             document.getElementById('dashboardLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                showSection('dashboardSection'); // Cette fonction appellera loadAlerts()
+                showSection('dashboardSection');
             });
 
             document.getElementById('alertsLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                showSection('alertsSection'); // Cette fonction appellera loadAlerts()
+                showSection('alertsSection');
             });
 
             document.getElementById('emailLogsLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                showSection('emailLogsSection'); // Cette fonction appellera loadEmailLogs()
+                showSection('emailLogsSection');
             });
 
-            // 4. Afficher la section du tableau de bord par défaut au chargement initial.
-            // Cela déclenchera la première série de chargement de données via showSection.
             showSection('dashboardSection');
         });
     </script>
