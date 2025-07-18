@@ -99,12 +99,12 @@
                 <div class="p-4">
                     <div class="mb-6">
                         <h2 class="text-xs uppercase font-semibold text-gray-500 mb-2">Main</h2>
-                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-blue-50 text-primary">
-                            <i class="fas fa-tachometer-alt mr-3 text-primary"></i>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100" id="dashboardLink">
+                            <i class="fas fa-tachometer-alt mr-3 text-gray-500"></i>
                             Dashboard
                         </a>
-                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1">
-                            <i class="fas fa-bell mr-3 text-gray-500"></i>
+                        <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-blue-50 text-primary mt-1" id="alertsLink">
+                            <i class="fas fa-bell mr-3 text-primary"></i>
                             Alerts
                         </a>
                     </div>
@@ -723,26 +723,52 @@
         }
 
         function updateCharts(alerts) {
-            const typeCounts = { 'Sanction': 0, 'Non-Cooperative': 0, 'PEP': 0, 'Other': 0 };
-            const statusCounts = { 'Ouverte': 0, 'En cours de traitement': 0, 'Fermée - Vrai positif': 0, 'Fermée - Faux positif': 0 };
+            const typeCounts = {};
+            const statusCounts = {};
+            const typeLabels = new Set();
+            const statusLabels = new Set();
 
             alerts.forEach(alert => {
-                if (typeCounts.hasOwnProperty(alert.typeAlerte)) {
-                    typeCounts[alert.typeAlerte]++;
-                } else {
-                    typeCounts['Other']++;
-                }
+                typeCounts[alert.typeAlerte] = (typeCounts[alert.typeAlerte] || 0) + 1;
+                typeLabels.add(alert.typeAlerte);
 
-                if (statusCounts.hasOwnProperty(alert.statutAlerte)) {
-                    statusCounts[alert.statutAlerte]++;
-                }
+                statusCounts[alert.statutAlerte] = (statusCounts[alert.statutAlerte] || 0) + 1;
+                statusLabels.add(alert.statutAlerte);
             });
 
-            alertsByTypeChart.data.datasets[0].data = Object.values(typeCounts);
-            alertsByTypeChart.update();
+            const finalTypeLabels = Array.from(typeLabels).sort();
+            const finalStatusLabels = Array.from(statusLabels).sort();
 
-            alertsByStatusChart.data.datasets[0].data = Object.values(statusCounts);
-            alertsByStatusChart.update();
+            const typeColors = {
+                'Sanction': '#ef4444',
+                'PaysNonCooperant': '#f97316',
+                'PEP': '#8b5cf6',
+                'Other': '#64748b'
+            };
+            const dynamicTypeBackgroundColors = finalTypeLabels.map(label => typeColors[label] || '#64748b');
+
+            const statusColors = {
+                'Ouverte': '#f59e0b',
+                'En cours de traitement': '#3b82f6',
+                'Fermée - Vrai positif': '#10b981',
+                'Fermée - Faux positif': '#64748b',
+                'Fermée - Résolu': '#10b981'
+            };
+            const dynamicStatusBackgroundColors = finalStatusLabels.map(label => statusColors[label] || '#64748b');
+
+            if (alertsByTypeChart) { // Check if chart object exists
+                alertsByTypeChart.data.labels = finalTypeLabels;
+                alertsByTypeChart.data.datasets[0].data = finalTypeLabels.map(label => typeCounts[label]);
+                alertsByTypeChart.data.datasets[0].backgroundColor = dynamicTypeBackgroundColors;
+                alertsByTypeChart.update();
+            } else { console.error("alertsByTypeChart object not found."); }
+
+            if (alertsByStatusChart) { // Check if chart object exists
+                alertsByStatusChart.data.labels = finalStatusLabels;
+                alertsByStatusChart.data.datasets[0].data = finalStatusLabels.map(label => statusCounts[label]);
+                alertsByStatusChart.data.datasets[0].backgroundColor = dynamicStatusBackgroundColors;
+                alertsByStatusChart.update();
+            } else { console.error("alertsByStatusChart object not found."); }
         }
 
         // --- Logique du Modal ---
@@ -762,7 +788,14 @@
                 document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte; 
 
                 document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
-                document.getElementById('modalCountry').textContent = 'N/A'; // L'entité AmlAlert ne contient pas directement le pays de domiciliation du tiers.
+                let country = 'N/A';
+                if (alertDetails.typeAlerte === 'PaysNonCooperant' && alertDetails.descriptionAlerte) {
+                    const match = alertDetails.descriptionAlerte.match(/pays du tiers \((.*?)\)/);
+                    if (match && match[1]) {
+                        country = match[1];
+                    }
+                }
+                document.getElementById('modalCountry').textContent = country; 
                 document.getElementById('modalCounterpartyType').textContent = 'N/A'; 
                 document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte; 
                 document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb;
@@ -803,15 +836,15 @@
                 ` : '<p class="text-sm text-gray-500">Aucun commentaire.</p>';
 
 
-                document.getElementById('newComment').value = ''; // Clear new comment field
-                document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte; // Set current status in select
+                document.getElementById('newComment').value = ''; 
+                document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte; 
 
                 modal.classList.remove('hidden');
             } catch (error) {
                 alert('Erreur lors du chargement de l\'alerte: ' + error.message);
                 console.error(error);
             } finally {
-                hideLoading(); // MASQUER LE LOADER
+                hideLoading();
             }
         }
 
@@ -820,82 +853,26 @@
         let currentFilters = { page: 0, size: 10, sortBy: 'dateAlerte', sortDir: 'desc' };
 
         async function loadAlerts() {
-            showLoading(); // AFFICHER LE LOADER
+            showLoading();
             try {
-                const response = await fetchAlerts(currentFilters); // APPEL API RÉEL
+                const response = await fetchAlerts(currentFilters);
                 renderAlertsTable(response.content);
                 updatePagination(response.pageable, response.totalElements);
-                const allAlertsForSummary = await fetchAlerts({ size: 10000 }); // Récupère toutes les alertes pour les stats
-                updateSummaryCards(allAlertsForSummary.content); 
+                updateSummaryCards(response.content); // Passe les données filtrées pour les graphiques
 
             } catch (error) {
                 alert('Erreur lors du chargement des alertes: ' + error.message);
                 console.error(error);
             } finally {
-                hideLoading(); // MASQUER LE LOADER
+                hideLoading();
             }
         }
 
-        // Attache les écouteurs d'événements après que le DOM soit complètement chargé
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialisation des graphiques Chart.js
-            const alertsByTypeCtx = document.getElementById('alertsByTypeChart'); // Get the canvas element
-            const alertsByTypeChart = new Chart(alertsByTypeCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Sanctions', 'Non-Cooperative', 'PEP', 'Other'],
-                    datasets: [{
-                        data: [], // Will be populated by updateCharts
-                        backgroundColor: [
-                            '#ef4444', // red
-                            '#f97316', // orange
-                            '#8b5cf6', // purple
-                            '#64748b'  // gray
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        }
-                    }
-                }
-            });
+        // Déclaration des variables de modale à une portée plus large
+        let modal, closeModal, cancelModal;
 
-            const alertsByStatusCtx = document.getElementById('alertsByStatusChart'); // Get the canvas element
-            const alertsByStatusChart = new Chart(alertsByStatusCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Open', 'In Progress', 'Resolved', 'False Positive'],
-                    datasets: [{
-                        label: 'Alerts',
-                        data: [], // Will be populated by updateCharts
-                        backgroundColor: [
-                            '#f59e0b', // yellow
-                            '#3b82f6', // blue
-                            '#10b981', // green
-                            '#64748b'  // gray
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-
-            // Attachement des écouteurs d'événements
+        // Fonction pour initialiser tous les écouteurs d'événements
+        function initializeUIEventListeners() {
             const sidebarToggle = document.getElementById('sidebarToggle');
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
@@ -1007,19 +984,20 @@
             } else { console.error("Element #resendEmailBtn not found."); }
 
 
-            const modal = document.getElementById('alertModal'); // Modal itself might be null if not loaded
-            const closeModal = document.getElementById('closeModal');
-            const cancelModal = document.getElementById('cancelModal');
+            // Assignation des variables de modale ici, après que le DOM soit prêt
+            modal = document.getElementById('alertModal'); 
+            closeModal = document.getElementById('closeModal');
+            cancelModal = document.getElementById('cancelModal');
 
             if (closeModal) {
                 closeModal.addEventListener('click', function() {
-                    modal.classList.add('hidden');
+                    if (modal) modal.classList.add('hidden'); // Vérification ajoutée
                 });
             } else { console.error("Element #closeModal not found."); }
             
             if (cancelModal) {
                 cancelModal.addEventListener('click', function() {
-                    modal.classList.add('hidden');
+                    if (modal) modal.classList.add('hidden'); // Vérification ajoutée
                 });
             } else { console.error("Element #cancelModal not found."); }
             
@@ -1030,7 +1008,77 @@
                     }
                 });
             } else { console.error("Element #alertModal not found."); }
+        }
+
+
+        // Initial load of alerts when the page is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // AJOUT D'UN PETIT DÉLAI AVANT LE CHARGEMENT INITIAL POUR S'ASSURER QUE LE DOM EST PRÊT
+            setTimeout(() => {
+                loadAlerts(); // Charge les alertes au démarrage
+                initializeUIEventListeners(); // Appelle la fonction pour attacher les écouteurs
+            }, 100); // AJOUT D'UN DÉLAI DE 100ms
         });
+
+
+        // Charts (initialization moved to loadAlerts for dynamic data)
+        let alertsByTypeChart; // Déclaration globale
+        let alertsByStatusChart; // Déclaration globale
+
+        // Initialisation des graphiques Chart.js
+        function initializeCharts() {
+            const alertsByTypeCtx = document.getElementById('alertsByTypeChart'); // Get the canvas element
+            if (alertsByTypeCtx) {
+                alertsByTypeChart = new Chart(alertsByTypeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [], // Labels dynamiques
+                        datasets: [{
+                            data: [], // Données dynamiques
+                            backgroundColor: [], // Couleurs dynamiques
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            }
+                        }
+                    }
+                });
+            } else { console.error("Element #alertsByTypeChart not found."); }
+
+            const alertsByStatusCtx = document.getElementById('alertsByStatusChart'); // Get the canvas element
+            if (alertsByStatusCtx) {
+                alertsByStatusChart = new Chart(alertsByStatusCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [], // Labels dynamiques
+                        datasets: [{
+                            label: 'Alerts',
+                            data: [], // Données dynamiques
+                            backgroundColor: [], // Couleurs dynamiques
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } else { console.error("Element #alertsByStatusChart not found."); }
+        }
+
+        // Appeler l'initialisation des charts au chargement du DOM
+        document.addEventListener('DOMContentLoaded', initializeCharts);
 
     </script>
 </body>
