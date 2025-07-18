@@ -49,9 +49,9 @@
         .chart-container {
             height: 300px;
         }
-        /* Styles pour le message de chargement (maintenant caché par défaut) */
+        /* Styles pour le message de chargement */
         #loadingOverlay {
-            display: none; /* MODIFIÉ: Caché par défaut */
+            display: flex; /* Initialement visible pour le premier chargement */
             align-items: center;
             justify-content: center;
             position: fixed;
@@ -73,11 +73,15 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Masquer le loader après le chargement initial */
+        #loadingOverlay.hidden { /* MODIFIÉ: Utilise la classe hidden */
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- Overlay de chargement (maintenant caché par défaut) -->
-    <div id="loadingOverlay" class="hidden">
+    <!-- Overlay de chargement -->
+    <div id="loadingOverlay">
         <div class="spinner"></div>
         <p class="ml-3 text-lg text-primary">Chargement...</p>
     </div>
@@ -401,6 +405,9 @@
                         <option value="Fermée - Vrai positif">Resolved</option>
                         <option value="Fermée - Faux positif">False Positive</option>
                     </select>
+                    <button type="button" id="resendEmailBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-info text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-info sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Renvoyer Mail
+                    </button>
                     <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="cancelModal">
                         Cancel
                     </button>
@@ -526,15 +533,20 @@
          * @returns {Promise<object>} - Une promesse qui résout avec les données paginées des alertes
          */
         async function fetchAlerts(params) {
+            showLoading(); // AFFICHER LE LOADER
             const queryParams = new URLSearchParams(params).toString();
             const url = `${API_BASE_URL}/api/alerts?${queryParams}`;
             
-            const response = await fetch(url);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                }
+                return await response.json();
+            } finally {
+                hideLoading(); // MASQUER LE LOADER
             }
-            return await response.json();
         }
 
         /**
@@ -543,14 +555,19 @@
          * @returns {Promise<object>} - Une promesse qui résout avec les détails de l'alerte ou rejette si non trouvée
          */
         async function fetchAlertDetails(alertId) {
+            showLoading(); // AFFICHER LE LOADER
             const url = `${API_BASE_URL}/api/alerts/${alertId}`;
             
-            const response = await fetch(url);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                }
+                return await response.json();
+            } finally {
+                hideLoading(); // MASQUER LE LOADER
             }
-            return await response.json();
         }
 
         /**
@@ -561,24 +578,65 @@
          * @returns {Promise<object>} - Une promesse qui résout avec l'alerte mise à jour
          */
         async function updateAlertStatus(alertId, newStatus, comments) {
+            showLoading(); // AFFICHER LE LOADER
             const url = `${API_BASE_URL}/api/alerts/${alertId}/status`;
             
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ newStatus, comments })
-            });
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ newStatus, comments })
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                }
+                return await response.json();
+            } finally {
+                hideLoading(); // MASQUER LE LOADER
             }
-            return await response.json();
         }
 
+        // NOUVELLE FONCTION: Appelle l'API POST /api/alerts/{alertId}/resend-email
+        async function resendAlertEmail(alertId) {
+            showLoading(); // AFFICHER LE LOADER
+            const url = `${API_BASE_URL}/api/alerts/${alertId}/resend-email`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                }
+                return await response.text(); // Ou response.json() si le backend renvoie du JSON
+            } finally {
+                hideLoading(); // MASQUER LE LOADER
+            }
+        }
+
+
         // --- Fonctions d'aide UI ---
+
+        function showLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('hidden');
+            }
+        }
+
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
 
         function getStatusBadgeHtml(status) {
             let colorClass = 'bg-gray-100 text-gray-800';
@@ -596,6 +654,7 @@
 
         function renderAlertsTable(alertsContent) {
             const tableBody = document.getElementById('alertsTableBody');
+            if (!tableBody) { console.error("Element #alertsTableBody not found."); return; } // ADDED NULL CHECK
             tableBody.innerHTML = ''; // Clear existing rows
 
             if (alertsContent.length === 0) {
@@ -643,17 +702,14 @@
             const prevPageMobileBtn = document.getElementById('prevPageMobile');
             const nextPageMobileBtn = document.getElementById('nextPageMobile');
 
-            const start = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
-            const end = Math.min(start + pageable.pageSize - 1, totalElements);
+            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
+            if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1) + pageable.pageSize - 1, totalElements);
+            if (totalResults) totalResults.textContent = totalElements;
 
-            currentPageStart.textContent = start;
-            currentPageEnd.textContent = end;
-            totalResults.textContent = totalElements;
-
-            prevPageBtn.disabled = pageable.pageNumber === 0;
-            prevPageMobileBtn.disabled = pageable.pageNumber === 0;
-            nextPageBtn.disabled = pageable.last;
-            nextPageMobileBtn.disabled = pageable.last;
+            if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
+            if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
+            if (nextPageBtn) nextPageBtn.disabled = pageable.last;
+            if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
         }
 
         function updateSummaryCards(alerts) {
@@ -667,25 +723,55 @@
         }
 
         function updateCharts(alerts) {
-            const typeCounts = { 'Sanction': 0, 'Non-Cooperative': 0, 'PEP': 0, 'Other': 0 };
-            const statusCounts = { 'Ouverte': 0, 'En cours de traitement': 0, 'Fermée - Vrai positif': 0, 'Fermée - Faux positif': 0 };
+            // Initialisation dynamique des compteurs et labels
+            const typeCounts = {};
+            const statusCounts = {};
+            const typeLabels = new Set();
+            const statusLabels = new Set();
 
             alerts.forEach(alert => {
-                if (typeCounts.hasOwnProperty(alert.typeAlerte)) {
-                    typeCounts[alert.typeAlerte]++;
-                } else {
-                    typeCounts['Other']++;
-                }
+                // Pour les types d'alerte
+                typeCounts[alert.typeAlerte] = (typeCounts[alert.typeAlerte] || 0) + 1;
+                typeLabels.add(alert.typeAlerte);
 
-                if (statusCounts.hasOwnProperty(alert.statutAlerte)) {
-                    statusCounts[alert.statutAlerte]++;
-                }
+                // Pour les statuts d'alerte
+                statusCounts[alert.statutAlerte] = (statusCounts[alert.statutAlerte] || 0) + 1;
+                statusLabels.add(alert.statutAlerte);
             });
 
-            alertsByTypeChart.data.datasets[0].data = Object.values(typeCounts);
+            // Conversion des Sets en tableaux pour les labels
+            const finalTypeLabels = Array.from(typeLabels).sort(); // Tri alphabétique
+            const finalStatusLabels = Array.from(statusLabels).sort(); // Tri alphabétique
+
+            // Couleurs pour les types d'alerte (vous pouvez les personnaliser)
+            const typeColors = {
+                'Sanction': '#ef4444', // red
+                'PaysNonCooperant': '#f97316', // orange
+                'PEP': '#8b5cf6', // purple
+                'Other': '#64748b' // gray
+            };
+            const dynamicTypeBackgroundColors = finalTypeLabels.map(label => typeColors[label] || '#64748b'); // Fallback to 'Other' color
+
+            // Couleurs pour les statuts d'alerte (vous pouvez les personnaliser)
+            const statusColors = {
+                'Ouverte': '#f59e0b', // yellow
+                'En cours de traitement': '#3b82f6', // blue
+                'Fermée - Vrai positif': '#10b981', // green
+                'Fermée - Faux positif': '#64748b', // gray
+                'Fermée - Résolu': '#10b981' // green (si vous utilisez ce statut)
+            };
+            const dynamicStatusBackgroundColors = finalStatusLabels.map(label => statusColors[label] || '#64748b');
+
+            // Mise à jour du graphique par type
+            alertsByTypeChart.data.labels = finalTypeLabels;
+            alertsByTypeChart.data.datasets[0].data = finalTypeLabels.map(label => typeCounts[label]);
+            alertsByTypeChart.data.datasets[0].backgroundColor = dynamicTypeBackgroundColors;
             alertsByTypeChart.update();
 
-            alertsByStatusChart.data.datasets[0].data = Object.values(statusCounts);
+            // Mise à jour du graphique par statut
+            alertsByStatusChart.data.labels = finalStatusLabels;
+            alertsByStatusChart.data.datasets[0].data = finalStatusLabels.map(label => statusCounts[label]);
+            alertsByStatusChart.data.datasets[0].backgroundColor = dynamicStatusBackgroundColors;
             alertsByStatusChart.update();
         }
 
@@ -693,6 +779,7 @@
         let currentAlertId = null;
 
         async function openAlertModal(alertId) {
+            showLoading(); // AFFICHER LE LOADER
             try {
                 const alertDetails = await fetchAlertDetails(alertId); // APPEL API RÉEL
                 currentAlertId = alertId;
@@ -702,15 +789,21 @@
                 document.getElementById('modalClientName').textContent = alertDetails.clientCabinetName;
                 document.getElementById('modalType').textContent = alertDetails.typeAlerte;
                 document.getElementById('modalStatusBadge').innerHTML = getStatusBadgeHtml(alertDetails.statutAlerte);
-                document.getElementById('modalSource').textContent = alertDetails.sourceCorrespondance;
+                document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte; 
 
                 document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
-                document.getElementById('modalCountry').textContent = 'N/A'; // Ce champ n'est pas directement dans l'objet Alerte de l'API
-                document.getElementById('modalCounterpartyType').textContent = 'N/A'; // Ce champ n'est pas directement dans l'objet Alerte de l'API
-                document.getElementById('modalMatchReason').textContent = alertDetails.detailsCorrespondance;
-                document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb; // Utilisation de tiersIdClientDb comme référence
+                let country = 'N/A';
+                if (alertDetails.typeAlerte === 'PaysNonCooperant' && alertDetails.descriptionAlerte) {
+                    const match = alertDetails.descriptionAlerte.match(/pays du tiers \((.*?)\)/);
+                    if (match && match[1]) {
+                        country = match[1];
+                    }
+                }
+                document.getElementById('modalCountry').textContent = country; 
+                document.getElementById('modalCounterpartyType').textContent = 'N/A'; 
+                document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte; 
+                document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb;
 
-                // Historique et commentaires (basé sur le champ commentairesTraitement de l'API)
                 const modalAlertHistory = document.getElementById('modalAlertHistory');
                 modalAlertHistory.innerHTML = `
                     <div class="flex items-start">
@@ -754,6 +847,8 @@
             } catch (error) {
                 alert('Erreur lors du chargement de l\'alerte: ' + error.message);
                 console.error(error);
+            } finally {
+                hideLoading(); // MASQUER LE LOADER
             }
         }
 
@@ -762,119 +857,173 @@
         let currentFilters = { page: 0, size: 10, sortBy: 'dateAlerte', sortDir: 'desc' };
 
         async function loadAlerts() {
+            showLoading(); // AFFICHER LE LOADER
             try {
                 const response = await fetchAlerts(currentFilters); // APPEL API RÉEL
                 renderAlertsTable(response.content);
                 updatePagination(response.pageable, response.totalElements);
-                // Pour les summary cards et charts, on a besoin de toutes les données si l'API ne fournit pas d'agrégats
-                // Pour un POC, on peut faire un appel séparé ou une logique plus complexe si nécessaire
-                // Pour l'instant, on va simuler les agrégats car l'API /alerts paginée ne donne pas le total non filtré
-                const allAlertsForSummary = await fetchAlerts({ size: 10000 }); // Récupère toutes les alertes pour les stats
-                updateSummaryCards(allAlertsForSummary.content); 
+                // MODIFIÉ: Passe les données filtrées à updateSummaryCards pour les graphiques
+                updateSummaryCards(response.content); 
 
             } catch (error) {
                 alert('Erreur lors du chargement des alertes: ' + error.message);
                 console.error(error);
+            } finally {
+                hideLoading(); // MASQUER LE LOADER
             }
         }
 
-        // Pagination event listeners
-        document.getElementById('prevPage').addEventListener('click', () => {
-            if (currentFilters.page > 0) {
-                currentFilters.page--;
-                loadAlerts();
-            }
-        });
-        document.getElementById('nextPage').addEventListener('click', () => {
-            currentFilters.page++;
-            loadAlerts();
-        });
-        document.getElementById('prevPageMobile').addEventListener('click', () => {
-            if (currentFilters.page > 0) {
-                currentFilters.page--;
-                loadAlerts();
-            }
-        });
-        document.getElementById('nextPageMobile').addEventListener('click', () => {
-            currentFilters.page++;
-            loadAlerts();
-        });
+        // Fonction pour initialiser tous les écouteurs d'événements
+        function initializeUIEventListeners() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.querySelector('.sidebar').classList.toggle('open');
+                });
+            } else { console.error("Element #sidebarToggle not found."); }
 
-        // Filter event listener
-        document.getElementById('filterButton').addEventListener('click', () => {
-            currentFilters.clientCabinetName = document.getElementById('filterClient').value;
-            currentFilters.statutAlerte = document.getElementById('filterStatus').value;
-            currentFilters.page = 0; // Reset to first page on filter change
-            loadAlerts();
-        });
+            const prevPageBtn = document.getElementById('prevPage');
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', () => {
+                    if (currentFilters.page > 0) {
+                        currentFilters.page--;
+                        loadAlerts();
+                    }
+                });
+            } else { console.error("Element #prevPage not found."); }
 
-        // Sort event listeners
-        document.querySelectorAll('th[data-sort-by]').forEach(header => {
-            header.addEventListener('click', () => {
-                const sortBy = header.dataset.sortBy;
-                if (currentFilters.sortBy === sortBy) {
-                    currentFilters.sortDir = currentFilters.sortDir === 'asc' ? 'desc' : 'asc';
-                } else {
-                    currentFilters.sortBy = sortBy;
-                    currentFilters.sortDir = 'desc'; // Default sort direction for new sort column
-                }
-                loadAlerts();
+            const nextPageBtn = document.getElementById('nextPage');
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', () => {
+                    currentFilters.page++;
+                    loadAlerts();
+                });
+            } else { console.error("Element #nextPage not found."); }
+
+            const prevPageMobileBtn = document.getElementById('prevPageMobile');
+            if (prevPageMobileBtn) {
+                prevPageMobileBtn.addEventListener('click', () => {
+                    if (currentFilters.page > 0) {
+                        currentFilters.page--;
+                        loadAlerts();
+                    }
+                });
+            } else { console.error("Element #prevPageMobile not found."); }
+
+            const nextPageMobileBtn = document.getElementById('nextPageMobile');
+            if (nextPageMobileBtn) {
+                nextPageMobileBtn.addEventListener('click', () => {
+                    currentFilters.page++;
+                    loadAlerts();
+                });
+            } else { console.error("Element #nextPageMobile not found."); }
+
+            const filterButton = document.getElementById('filterButton');
+            if (filterButton) {
+                filterButton.addEventListener('click', () => {
+                    currentFilters.clientId = document.getElementById('filterClient').value;
+                    currentFilters.status = document.getElementById('filterStatus').value;
+                    currentFilters.page = 0; // Reset to first page on filter change
+                    loadAlerts();
+                });
+            } else { console.error("Element #filterButton not found."); }
+
+            document.querySelectorAll('th[data-sort-by]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortBy = header.dataset.sortBy;
+                    if (currentFilters.sortBy === sortBy) {
+                        currentFilters.sortDir = currentFilters.sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentFilters.sortBy = sortBy;
+                        currentFilters.sortDir = 'desc'; // Default sort direction for new sort column
+                    }
+                    loadAlerts();
+                });
             });
-        });
 
-        // Save Changes button in modal
-        document.getElementById('saveChangesBtn').addEventListener('click', async () => {
-            if (!currentAlertId) return;
+            const saveChangesBtn = document.getElementById('saveChangesBtn');
+            if (saveChangesBtn) {
+                saveChangesBtn.addEventListener('click', async () => {
+                    if (!currentAlertId) return;
 
-            const newCommentText = document.getElementById('newComment').value;
-            const newStatusValue = document.getElementById('changeStatusSelect').value;
+                    const newCommentText = document.getElementById('newComment').value;
+                    const newStatusValue = document.getElementById('changeStatusSelect').value;
 
-            if (!newCommentText && !newStatusValue) {
-                alert('Veuillez ajouter un commentaire ou changer le statut.');
-                return;
-            }
+                    if (!newCommentText && !newStatusValue) {
+                        alert('Veuillez ajouter un commentaire ou changer le statut.');
+                        return;
+                    }
 
-            try {
-                const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
-                alert('Alerte mise à jour avec succès !');
-                modal.classList.add('hidden');
-                loadAlerts(); // Reload table to reflect changes
-            } catch (error) {
-                alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
-                console.error(error);
-            }
-        });
+                    try {
+                        const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
+                        alert('Alerte mise à jour avec succès !');
+                        modal.classList.add('hidden');
+                        loadAlerts(); // Reload table to reflect changes
+                    } catch (error) {
+                        alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
+                        console.error(error);
+                    }
+                });
+            } else { console.error("Element #saveChangesBtn not found."); }
 
-        // Toggle sidebar on mobile
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        });
+            const resendEmailBtn = document.getElementById('resendEmailBtn');
+            if (resendEmailBtn) { // Check for existence
+                resendEmailBtn.addEventListener('click', async () => {
+                    if (!currentAlertId) return;
 
-        // Modal functionality
-        const modal = document.getElementById('alertModal');
-        const closeModal = document.getElementById('closeModal');
-        const cancelModal = document.getElementById('cancelModal');
-        
-        closeModal.addEventListener('click', function() {
-            modal.classList.add('hidden');
-        });
-        
-        cancelModal.addEventListener('click', function() {
-            modal.classList.add('hidden');
-        });
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                modal.classList.add('hidden');
-            }
-        });
+                    if (!confirm('Êtes-vous sûr de vouloir renvoyer l\'e-mail pour cette alerte ?')) {
+                        return;
+                    }
+
+                    try {
+                        const responseText = await resendAlertEmail(currentAlertId); // APPEL API RÉEL
+                        alert('E-mail de renvoi : ' + responseText);
+                    } catch (error) {
+                        alert('Erreur lors du renvoi de l\'e-mail : ' + error.message);
+                        console.error(error);
+                    }
+                });
+            } else { console.error("Element #resendEmailBtn not found."); }
+
+
+            const modal = document.getElementById('alertModal'); // Modal itself might be null if not loaded
+            const closeModal = document.getElementById('closeModal');
+            const cancelModal = document.getElementById('cancelModal');
+
+            if (closeModal) {
+                closeModal.addEventListener('click', function() {
+                    modal.classList.add('hidden');
+                });
+            } else { console.error("Element #closeModal not found."); }
+            
+            if (cancelModal) {
+                cancelModal.addEventListener('click', function() {
+                    modal.classList.add('hidden');
+                });
+            } else { console.error("Element #cancelModal not found."); }
+            
+            if (modal) { // Only add if modal exists
+                window.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            } else { console.error("Element #alertModal not found."); }
+        }
+
 
         // Initial load of alerts when the page is ready
-        document.addEventListener('DOMContentLoaded', loadAlerts);
+        document.addEventListener('DOMContentLoaded', () => {
+            // AJOUT D'UN PETIT DÉLAI AVANT LE CHARGEMENT INITIAL POUR S'ASSURER QUE LE DOM EST PRÊT
+            setTimeout(() => {
+                loadAlerts(); // Charge les alertes au démarrage
+                initializeUIEventListeners(); // Appelle la fonction pour attacher les écouteurs
+            }, 100); // AJOUT D'UN DÉLAI DE 100ms
+        });
+
 
         // Charts (initialization moved to loadAlerts for dynamic data)
-        const alertsByTypeCtx = document.getElementById('alertsByTypeChart').getContext('2d');
+        const alertsByTypeCtx = document.getElementById('alertsByTypeChart'); // Get the canvas element
         const alertsByTypeChart = new Chart(alertsByTypeCtx, {
             type: 'doughnut',
             data: {
@@ -901,7 +1050,7 @@
             }
         });
 
-        const alertsByStatusCtx = document.getElementById('alertsByStatusChart').getContext('2d');
+        const alertsByStatusCtx = document.getElementById('alertsByStatusChart'); // Get the canvas element
         const alertsByStatusChart = new Chart(alertsByStatusCtx, {
             type: 'bar',
             data: {
