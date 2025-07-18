@@ -568,7 +568,6 @@
             const endIndex = Math.min(startIndex + params.size, totalElements);
             const content = filteredAlerts.slice(startIndex, endIndex);
 
-            // Retourne une promesse résolue avec les données simulées après un petit délai
             return new Promise(resolve => setTimeout(() => resolve({
                 content: content,
                 pageable: {
@@ -685,8 +684,6 @@
         }
 
         // --- Fonctions d'aide UI ---
-        // (showLoading et hideLoading définies plus haut)
-
         function getStatusBadgeHtml(status) {
             let colorClass = 'bg-gray-100 text-gray-800';
             switch (status) {
@@ -802,25 +799,23 @@
         }
 
         function loadAlerts() {
-            showLoading(); // Affiche le loader au début du chargement des alertes
+            showLoading();
             fetchAlerts(currentFilters)
                 .then(response => {
                     renderAlertsTable(response.content);
                     updatePagination(response.pageable, response.totalElements);
-
-                    // Ensuite, appel pour toutes les alertes (pour les cartes de résumé et les graphiques)
                     return fetchAlerts({ page: 0, size: 99999 });
                 })
                 .then(fullAlertsResponse => {
                     updateSummaryCards(fullAlertsResponse.content);
                 })
                 .catch(error => {
-                    // NE PAS afficher d'alerte disruptive, juste un log pour le débogage
+                    // Supprime l'alerte pour ne pas la montrer si la simulation fonctionne
                     console.error('Erreur lors du chargement des alertes:', error);
-                    console.warn("L'API réelle n'a pas pu être contactée. Affichage des données simulées.");
+                    console.warn("L'API réelle des alertes n'a pas pu être contactée. Affichage des données simulées.");
                 })
                 .finally(() => {
-                    hideLoading(); // Cache le loader une fois toutes les opérations de chargement terminées
+                    hideLoading();
                 });
         }
 
@@ -932,7 +927,7 @@
                     console.error("Modal element is not initialized.");
                 }
             } catch (error) {
-                alert('Erreur lors du chargement de l\'alerte: ' + error.message); // Garder l'alerte ici pour les erreurs de modale spécifiques
+                alert('Erreur lors du chargement de l\'alerte: ' + error.message);
                 console.error(error);
             } finally {
                 hideLoading();
@@ -960,18 +955,18 @@
 
             console.log("Returning SIMULATED email logs data.");
             const allSimulatedLogs = [
-                { id: 1, sentAt: new Date(2025, 6, 18, 10, 0).toISOString(), recipient: 'user1@example.com', subject: 'Alert: High Risk Transaction', status: 'SENT', errorMessage: null },
-                { id: 2, sentAt: new Date(2025, 6, 17, 14, 30).toISOString(), recipient: 'user2@example.com', subject: 'Alert: PEP Match', status: 'FAILED', errorMessage: 'SMTP connection failed' },
-                { id: 3, sentAt: new Date(2025, 6, 16, 9, 0).toISOString(), recipient: 'user3@example.com', subject: 'Alert: Non-Cooperating Country', status: 'SENT', errorMessage: null },
-                { id: 4, sentAt: new Date(2025, 6, 15, 11, 0).toISOString(), recipient: 'user4@example.com', subject: 'Alert: Large Transaction', status: 'SENT', errorMessage: null },
-                { id: 5, sentAt: new Date(2025, 6, 14, 16, 0).toISOString(), recipient: 'user5@example.com', subject: 'Alert: Suspicious Activity', status: 'FAILED', errorMessage: 'Network timeout' },
-                { id: 6, sentAt: new Date(2025, 6, 13, 8, 45).toISOString(), recipient: 'user6@example.com', subject: 'Alert: Sanctioned Entity', status: 'SENT', errorMessage: null },
-                { id: 7, sentAt: new Date(2025, 6, 12, 13, 0).toISOString(), recipient: 'user7@example.com', subject: 'Alert: Compliance Breach', status: 'SENT', errorMessage: null },
-                { id: 8, sentAt: new Date(2025, 6, 11, 10, 0).toISOString(), recipient: 'user8@example.com', subject: 'Alert: Fraud Detection', status: 'FAILED', errorMessage: 'Recipient blocked' },
-                { id: 9, sentAt: new Date(2025, 6, 10, 17, 0).toISOString(), recipient: 'user9@example.com', subject: 'Alert: Unusual Pattern', status: 'SENT', errorMessage: null },
-                { id: 10, sentAt: new Date(2025, 6, 9, 11, 0).toISOString(), recipient: 'user10@example.com', subject: 'Alert: High Value Transfer', status: 'SENT', errorMessage: null },
-                { id: 11, sentAt: new Date(2025, 6, 8, 14, 0).toISOString(), recipient: 'user11@example.com', subject: 'Alert: Regulatory Change', status: 'FAILED', errorMessage: 'Invalid email format' },
-                { id: 12, sentAt: new Date(2025, 6, 7, 9, 0).toISOString(), recipient: 'user12@example.com', subject: 'Alert: AML Review', status: 'SENT', errorMessage: null },
+                { id: 1, recipientEmail: 'user1@example.com', subject: 'Alert: High Risk Transaction', sentAt: new Date(2025, 6, 18, 10, 0).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 2, recipientEmail: 'user2@example.com', subject: 'Alert: PEP Match', sentAt: new Date(2025, 6, 17, 14, 30).toISOString(), status: 'FAILED', errorMessage: 'SMTP connection failed' },
+                { id: 3, recipientEmail: 'user3@example.com', subject: 'Alert: Non-Cooperating Country', sentAt: new Date(2025, 6, 16, 9, 0).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 4, recipientEmail: 'user4@example.com', subject: 'Alert: Large Transaction', sentAt: new Date(2025, 6, 15, 11, 0).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 5, recipientEmail: 'user5@example.com', subject: 'Alert: Suspicious Activity', sentAt: new Date(2025, 6, 14, 16, 0).toISOString(), status: 'FAILED', errorMessage: 'Network timeout' },
+                { id: 6, recipientEmail: 'user6@example.com', subject: 'Alert: Sanctioned Entity', sentAt: new Date(2025, 6, 13, 8, 45).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 7, recipientEmail: 'user7@example.com', subject: 'Alert: Compliance Breach', sentAt: new Date(2025, 6, 12, 13, 0).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 8, recipientEmail: 'user8@example.com', subject: 'Alert: Fraud Detection', sentAt: new Date(2025, 6, 11, 10, 0).toISOString(), status: 'FAILED', errorMessage: 'Recipient blocked' },
+                { id: 9, recipientEmail: 'user9@example.com', subject: 'Alert: Unusual Pattern', sentAt: new Date(2025, 6, 10, 17, 0).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 10, recipientEmail: 'user10@example.com', subject: 'Alert: High Value Transfer', sentAt: new Date(2025, 6, 9, 11, 0).toISOString(), status: 'SENT', errorMessage: null },
+                { id: 11, recipientEmail: 'user11@example.com', subject: 'Alert: Regulatory Change', sentAt: new Date(2025, 6, 8, 14, 0).toISOString(), status: 'FAILED', errorMessage: 'Invalid email format' },
+                { id: 12, recipientEmail: 'user12@example.com', subject: 'Alert: AML Review', sentAt: new Date(2025, 6, 7, 9, 0).toISOString(), status: 'SENT', errorMessage: null },
             ];
 
             const totalElements = allSimulatedLogs.length;
@@ -1012,8 +1007,7 @@
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${log.id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.sentAt).toLocaleString()}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.recipient}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.subject}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.recipientEmail}</td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.subject}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.status === 'SENT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                             ${log.status}
@@ -1070,19 +1064,19 @@
         }
 
         async function loadEmailLogs() {
-            showLoading(); // Affiche le loader au début du chargement des logs
+            showLoading();
             fetchEmailLogs(currentEmailLogFilters)
                 .then(response => {
                     renderEmailLogsTable(response.content);
                     updateEmailLogPagination(response.pageable, response.totalElements);
                 })
                 .catch(error => {
-                    // NE PAS afficher d'alerte disruptive, juste un log pour le débogage
+                    // Supprime l'alerte pour ne pas la montrer si la simulation fonctionne
                     console.error('Erreur lors du chargement des logs d\'e-mail:', error);
                     console.warn("L'API réelle des logs d'e-mail n'a pas pu être contactée. Affichage des données simulées.");
                 })
                 .finally(() => {
-                    hideLoading(); // Cache le loader une fois toutes les opérations de chargement terminées
+                    hideLoading();
                 });
         }
 
@@ -1124,7 +1118,7 @@
             } else if (sectionId === 'emailLogsSection') {
                 loadEmailLogs();
             } else if (sectionId === 'dashboardSection') {
-                 loadAlerts(); // Le dashboard utilise aussi les données d'alertes pour les cartes et graphiques
+                 loadAlerts();
             }
         }
 
