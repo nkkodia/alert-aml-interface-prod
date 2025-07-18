@@ -823,7 +823,9 @@
         }
 
         // Déclaration des variables de modale à une portée plus large
-        let modal, closeModal, cancelModal;
+        let modal = null;
+        let closeModal = null;
+        let cancelModal = null;
 
         // Fonction pour initialiser tous les écouteurs d'événements
         function initializeUIEventListeners() {
