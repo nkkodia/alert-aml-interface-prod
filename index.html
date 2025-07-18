@@ -291,7 +291,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="alertsTableBody" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
+                                        </tbody>
                             </table>
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
@@ -315,6 +315,8 @@
                                             <span class="sr-only">Previous</span>
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
+                                        <div id="pageNumbers" class="flex">
+                                            </div>
                                         <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                             <span class="sr-only">Next</span>
                                             <i class="fas fa-chevron-right"></i>
@@ -342,7 +344,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="emailLogsTableBody" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
+                                        </tbody>
                             </table>
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
@@ -366,6 +368,8 @@
                                             <span class="sr-only">Previous</span>
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
+                                        <div id="emailLogPageNumbers" class="flex">
+                                            </div>
                                         <button id="nextEmailLogPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                             <span class="sr-only">Next</span>
                                             <i class="fas fa-chevron-right"></i>
@@ -480,13 +484,12 @@
         // Déclaration globale des variables de modale et de graphiques
         // Initialisation à null est une bonne pratique.
         let modal = null;
-        let closeModal = null; // Renommé 'closeModalBtn' dans l'explication précédente mais 'closeModal' est ok si c'est le nom de l'ID HTML
-        let cancelModal = null; // Idem
+        let closeModal = null;
+        let cancelModal = null;
         let alertsByTypeChart = null;
         let alertsByStatusChart = null;
-        let saveChangesBtn = null; // Assurez-vous que ces boutons sont également déclarés globalement si utilisés partout
+        let saveChangesBtn = null;
         let resendEmailBtn = null;
-
 
         // --- Fonctions API Réelles ---
         async function fetchAlerts(params) {
@@ -543,7 +546,6 @@
             showLoading();
             const url = `${API_BASE_URL}/api/alerts/${alertId}/resend-email`;
 
-            // Récupérer l'adresse e-mail du destinataire depuis le champ de saisie
             const recipientEmailInput = document.getElementById('resendRecipientEmail');
             if (!recipientEmailInput) {
                 alert('Erreur: Le champ "Recipient Email for Resend" n\'a pas été trouvé dans la modale.');
@@ -562,9 +564,9 @@
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json' // Important pour envoyer un corps JSON
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ recipientEmail: recipientEmail }) // Envoyer l'adresse dans le corps
+                    body: JSON.stringify({ recipientEmail: recipientEmail })
                 });
 
                 if (!response.ok) {
@@ -643,6 +645,7 @@
             });
         }
 
+        // Updated updatePagination to also render page numbers
         function updatePagination(pageable, totalElements) {
             const currentPageStart = document.getElementById('currentPageStart');
             const currentPageEnd = document.getElementById('currentPageEnd');
@@ -651,16 +654,34 @@
             const nextPageBtn = document.getElementById('nextPage');
             const prevPageMobileBtn = document.getElementById('prevPageMobile');
             const nextPageMobileBtn = document.getElementById('nextPageMobile');
+            const pageNumbersContainer = document.getElementById('pageNumbers'); // New element for page numbers
 
             if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
-            if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1) + pageable.pageSize - 1, totalElements);
+            if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements, totalElements);
             if (totalResults) totalResults.textContent = totalElements;
 
             if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
             if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
+
+            // Render page numbers
+            if (pageNumbersContainer) {
+                pageNumbersContainer.innerHTML = ''; // Clear previous page numbers
+                const totalPages = pageable.totalPages;
+                for (let i = 0; i < totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i + 1;
+                    pageButton.className = `relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${i === pageable.pageNumber ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
+                    pageButton.addEventListener('click', () => {
+                        currentFilters.page = i;
+                        loadAlerts();
+                    });
+                    pageNumbersContainer.appendChild(pageButton);
+                }
+            }
         }
+
 
         function updateSummaryCards(alerts) {
             document.getElementById('totalAlerts').textContent = alerts.length;
@@ -696,6 +717,13 @@
             };
             const dynamicTypeBackgroundColors = finalTypeLabels.map(label => typeColors[label] || '#64748b');
 
+            if (alertsByTypeChart) {
+                alertsByTypeChart.data.labels = finalTypeLabels;
+                alertsByTypeChart.data.datasets[0].data = finalTypeLabels.map(label => typeCounts[label]);
+                alertsByTypeChart.data.datasets[0].backgroundColor = dynamicTypeBackgroundColors;
+                alertsByTypeChart.update();
+            } else { console.error("alertsByTypeChart object not found."); }
+
             const statusColors = {
                 'Ouverte': '#f59e0b',
                 'En cours de traitement': '#3b82f6',
@@ -705,12 +733,6 @@
             };
             const dynamicStatusBackgroundColors = finalStatusLabels.map(label => statusColors[label] || '#64748b');
 
-            if (alertsByTypeChart) {
-                alertsByTypeChart.data.labels = finalTypeLabels;
-                alertsByTypeChart.data.datasets[0].data = finalTypeLabels.map(label => typeCounts[label]);
-                alertsByTypeChart.data.datasets[0].backgroundColor = dynamicTypeBackgroundColors;
-                alertsByTypeChart.update();
-            } else { console.error("alertsByTypeChart object not found."); }
 
             if (alertsByStatusChart) {
                 alertsByStatusChart.data.labels = finalStatusLabels;
@@ -788,13 +810,12 @@
                 document.getElementById('newComment').value = '';
                 document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte;
 
-                // MODIFIÉ: Pré-remplir le champ de destinataire d'e-mail avec l'adresse admin par défaut
                 const resendRecipientEmailInput = document.getElementById('resendRecipientEmail');
                 if (resendRecipientEmailInput) {
                     resendRecipientEmailInput.value = 'admin@alertaml.com';
                 }
 
-                if (modal) { // Check if modal has been assigned
+                if (modal) {
                     modal.classList.remove('hidden');
                 } else {
                     console.error("Modal element is not initialized.");
@@ -807,174 +828,230 @@
             }
         }
 
-        // --- Initialisation et Événements ---
+        // --- Logique Email Logs ---
+        let currentEmailLogFilters = { page: 0, size: 10 }; // Filters for email logs
 
-        let currentFilters = { page: 0, size: 10, sortBy: 'dateAlerte', sortDir: 'desc' };
+        async function fetchEmailLogs(params) {
+            showLoading();
+            const queryParams = new URLSearchParams(params).toString();
+            // REMPLACER PAR L'URL RÉELLE DE VOTRE API DE LOGS D'EMAIL
+            const url = `${API_BASE_URL}/api/email-logs?${queryParams}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                }
+                // Simuler des données de logs si l'API n'est pas encore prête
+                const data = await response.json();
+                 if (data.content && data.content.length === 0) {
+                     // Simuler des logs si la réponse est vide
+                     data.content = [
+                         { id: 1, sentAt: new Date().toISOString(), recipient: 'user1@example.com', subject: 'Alert: High Risk Transaction', status: 'SENT', errorMessage: null },
+                         { id: 2, sentAt: new Date(Date.now() - 3600000).toISOString(), recipient: 'user2@example.com', subject: 'Alert: PEP Match', status: 'FAILED', errorMessage: 'SMTP connection failed' },
+                         { id: 3, sentAt: new Date(Date.now() - 7200000).toISOString(), recipient: 'user3@example.com', subject: 'Alert: Non-Cooperating Country', status: 'SENT', errorMessage: null },
+                     ];
+                     data.totalElements = 3;
+                     data.totalPages = 1;
+                     data.pageable.pageNumber = 0;
+                     data.pageable.pageSize = 10;
+                     data.last = true;
+                 }
+                return data;
 
-        async function loadAlerts() {
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderEmailLogsTable(logs) {
+            const tableBody = document.getElementById('emailLogsTableBody');
+            if (!tableBody) { console.error("Element #emailLogsTableBody not found."); return; }
+            tableBody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Aucun log d'e-mail trouvé.</td></tr>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${log.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.sentAt).toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.recipient}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.subject}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.status === 'SENT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${log.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.errorMessage || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateEmailLogPagination(pageable, totalElements) {
+            const currentPageStart = document.getElementById('currentEmailLogPageStart');
+            const currentPageEnd = document.getElementById('currentEmailLogPageEnd');
+            const totalResults = document.getElementById('totalEmailLogResults');
+            const prevPageBtn = document.getElementById('prevEmailLogPage');
+            const nextPageBtn = document.getElementById('nextEmailLogPage');
+            const prevPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
+            const nextPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
+            const pageNumbersContainer = document.getElementById('emailLogPageNumbers'); // New element for email log page numbers
+
+            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
+            if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements, totalElements);
+            if (totalResults) totalResults.textContent = totalElements;
+
+            if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
+            if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
+            if (nextPageBtn) nextPageBtn.disabled = pageable.last;
+            if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
+
+            // Render page numbers for email logs
+            if (pageNumbersContainer) {
+                pageNumbersContainer.innerHTML = ''; // Clear previous page numbers
+                const totalPages = pageable.totalPages;
+                for (let i = 0; i < totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i + 1;
+                    pageButton.className = `relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${i === pageable.pageNumber ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
+                    pageButton.addEventListener('click', () => {
+                        currentEmailLogFilters.page = i;
+                        loadEmailLogs();
+                    });
+                    pageNumbersContainer.appendChild(pageButton);
+                }
+            }
+        }
+
+        async function loadEmailLogs() {
             showLoading();
             try {
-                const response = await fetchAlerts(currentFilters);
-                renderAlertsTable(response.content);
-                updatePagination(response.pageable, response.totalElements);
-                updateSummaryCards(response.content); // Passe les données filtrées pour les graphiques
-
+                const response = await fetchEmailLogs(currentEmailLogFilters);
+                renderEmailLogsTable(response.content);
+                updateEmailLogPagination(response.pageable, response.totalElements);
             } catch (error) {
-                alert('Erreur lors du chargement des alertes: ' + error.message);
+                alert('Erreur lors du chargement des logs d\'e-mail: ' + error.message);
                 console.error(error);
             } finally {
                 hideLoading();
             }
         }
 
-        // Fonction pour initialiser tous les écouteurs d'événements
-        function initializeUIEventListeners() {
-            // Assignation des variables de modale ici, après que le DOM soit prêt
-            // Nous assignons les éléments DOM aux variables 'let' globales déjà déclarées.
+
+        // --- Gestion des sections de contenu ---
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            // Mise à jour du titre
+            const mainContentTitle = document.getElementById('mainContentTitle');
+            if (mainContentTitle) {
+                if (sectionId === 'dashboardSection') {
+                    mainContentTitle.textContent = 'AML Alert Dashboard';
+                } else if (sectionId === 'alertsSection') {
+                    mainContentTitle.textContent = 'Alerts Overview';
+                } else if (sectionId === 'emailLogsSection') {
+                    mainContentTitle.textContent = 'Email Sending Logs';
+                }
+            }
+
+            // Mettre à jour l'état actif dans la sidebar
+            document.querySelectorAll('nav a').forEach(link => {
+                link.classList.remove('bg-blue-50', 'text-primary');
+                link.classList.add('text-gray-700', 'hover:bg-gray-100');
+            });
+
+            const activeLink = document.getElementById(sectionId.replace('Section', 'Link'));
+            if (activeLink) {
+                activeLink.classList.remove('text-gray-700', 'hover:bg-gray-100');
+                activeLink.classList.add('bg-blue-50', 'text-primary');
+            }
+
+            // Recharger les données si nécessaire
+            if (sectionId === 'alertsSection') {
+                loadAlerts();
+            } else if (sectionId === 'emailLogsSection') {
+                loadEmailLogs();
+            }
+        }
+
+        // --- Initialisation et Événements généraux ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Assigner les éléments DOM aux variables globales après que le DOM soit chargé
             modal = document.getElementById('alertModal');
             closeModal = document.getElementById('closeModal');
             cancelModal = document.getElementById('cancelModal');
             saveChangesBtn = document.getElementById('saveChangesBtn');
             resendEmailBtn = document.getElementById('resendEmailBtn');
 
+            initializeCharts(); // Initialiser les graphiques
+            initializeUIEventListeners(); // Mettre en place tous les écouteurs d'événements
+            loadAlerts(); // Charger les alertes initiales pour la section Dashboard
 
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    document.querySelector('.sidebar').classList.toggle('open');
-                });
-            } else { console.error("Element #sidebarToggle not found."); }
+            // Initialiser la section active (Dashboard par défaut)
+            showSection('dashboardSection');
 
-            const prevPageBtn = document.getElementById('prevPage');
-            if (prevPageBtn) {
-                prevPageBtn.addEventListener('click', () => {
-                    if (currentFilters.page > 0) {
-                        currentFilters.page--;
-                        loadAlerts();
-                    }
-                });
-            } else { console.error("Element #prevPage not found."); }
-
-            const nextPageBtn = document.getElementById('nextPage');
-            if (nextPageBtn) {
-                nextPageBtn.addEventListener('click', () => {
-                    currentFilters.page++;
-                    loadAlerts();
-                });
-            } else { console.error("Element #nextPage not found."); }
-
-            const prevPageMobileBtn = document.getElementById('prevPageMobile');
-            if (prevPageMobileBtn) {
-                prevPageMobileBtn.addEventListener('click', () => {
-                    if (currentFilters.page > 0) {
-                        currentFilters.page--;
-                        loadAlerts();
-                    }
-                });
-            } else { console.error("Element #prevPageMobile not found."); }
-
-            const nextPageMobileBtn = document.getElementById('nextPageMobile');
-            if (nextPageMobileBtn) {
-                nextPageMobileBtn.addEventListener('click', () => {
-                    currentFilters.page++;
-                    loadAlerts();
-                });
-            } else { console.error("Element #nextPageMobile not found."); }
-
-            const filterButton = document.getElementById('filterButton');
-            if (filterButton) {
-                filterButton.addEventListener('click', () => {
-                    currentFilters.clientId = document.getElementById('filterClient').value;
-                    currentFilters.status = document.getElementById('filterStatus').value;
-                    currentFilters.page = 0; // Reset to first page on filter change
-                    loadAlerts();
-                });
-            } else { console.error("Element #filterButton not found."); }
-
-            document.querySelectorAll('th[data-sort-by]').forEach(header => {
-                header.addEventListener('click', () => {
-                    const sortBy = header.dataset.sortBy;
-                    if (currentFilters.sortBy === sortBy) {
-                        currentFilters.sortDir = currentFilters.sortDir === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        currentFilters.sortBy = sortBy;
-                        currentFilters.sortDir = 'desc'; // Default sort direction for new sort column
-                    }
-                    loadAlerts();
-                });
+            // Écouteurs pour la navigation de la sidebar
+            document.getElementById('dashboardLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('dashboardSection');
             });
 
-            // Utilisation des variables globales pour les écouteurs d'événements des boutons de la modale
-            if (saveChangesBtn) {
-                saveChangesBtn.addEventListener('click', async () => {
-                    if (!currentAlertId) return;
+            document.getElementById('alertsLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('alertsSection');
+            });
 
-                    const newCommentText = document.getElementById('newComment').value;
-                    const newStatusValue = document.getElementById('changeStatusSelect').value;
+            document.getElementById('emailLogsLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('emailLogsSection');
+            });
 
-                    if (!newCommentText && !newStatusValue) {
-                        alert('Veuillez ajouter un commentaire ou changer le statut.');
-                        return;
-                    }
-
-                    try {
-                        const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
-                        alert('Alerte mise à jour avec succès !');
-                        if (modal) modal.classList.add('hidden'); // 'modal' est la variable globale
-                        loadAlerts(); // Reload table to reflect changes
-                    } catch (error) {
-                        alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
-                        console.error(error);
+            // Pagination email logs
+            const prevEmailLogPageBtn = document.getElementById('prevEmailLogPage');
+            if (prevEmailLogPageBtn) {
+                prevEmailLogPageBtn.addEventListener('click', () => {
+                    if (currentEmailLogFilters.page > 0) {
+                        currentEmailLogFilters.page--;
+                        loadEmailLogs();
                     }
                 });
-            } else { console.error("Element #saveChangesBtn not found."); }
+            } else { console.error("Element #prevEmailLogPage not found."); }
 
-            if (resendEmailBtn) {
-                resendEmailBtn.addEventListener('click', async () => {
-                    if (!currentAlertId) return;
-
-                    if (!confirm('Êtes-vous sûr de vouloir renvoyer l\'e-mail pour cette alerte ?')) {
-                        return;
-                    }
-
-                    try {
-                        const responseText = await resendAlertEmail(currentAlertId); // APPEL API RÉEL
-                        alert('E-mail de renvoi : ' + responseText);
-                    } catch (error) {
-                        alert('Erreur lors du renvoi de l\'e-mail : ' + error.message);
-                        console.error(error);
-                    }
+            const nextEmailLogPageBtn = document.getElementById('nextEmailLogPage');
+            if (nextEmailLogPageBtn) {
+                nextEmailLogPageBtn.addEventListener('click', () => {
+                    currentEmailLogFilters.page++;
+                    loadEmailLogs();
                 });
-            } else { console.error("Element #resendEmailBtn not found."); }
+            } else { console.error("Element #nextEmailLogPage not found."); }
 
-            if (closeModal) { // 'closeModal' est la variable globale
-                closeModal.addEventListener('click', function() {
-                    if (modal) modal.classList.add('hidden'); // 'modal' est la variable globale
-                });
-            } else { console.error("Element #closeModal not found."); }
-
-            if (cancelModal) { // 'cancelModal' est la variable globale
-                cancelModal.addEventListener('click', function() {
-                    if (modal) modal.classList.add('hidden'); // 'modal' est la variable globale
-                });
-            } else { console.error("Element #cancelModal not found."); }
-
-            // Écouteur d'événement pour fermer la modale en cliquant en dehors
-            if (modal) { // 'modal' est la variable globale
-                window.addEventListener('click', function(event) {
-                    if (event.target === modal) {
-                        modal.classList.add('hidden');
+            const prevEmailLogPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
+            if (prevEmailLogPageMobileBtn) {
+                prevEmailLogPageMobileBtn.addEventListener('click', () => {
+                    if (currentEmailLogFilters.page > 0) {
+                        currentEmailLogFilters.page--;
+                        loadEmailLogs();
                     }
                 });
-            } else { console.error("Element #alertModal not found."); }
-        }
+            } else { console.error("Element #prevEmailLogPageMobile not found."); }
 
+            const nextEmailLogPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
+            if (nextEmailLogPageMobileBtn) {
+                nextEmailLogPageMobileBtn.addEventListener('click', () => {
+                    currentEmailLogFilters.page++;
+                    loadEmailLogs();
+                });
+            } else { console.error("Element #nextEmailLogPageMobile not found."); }
 
-        // Initial load of alerts when the page is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeCharts();
-            initializeUIEventListeners(); // Important: call this AFTER the DOM is loaded
-            loadAlerts(); // This can be called after UI listeners are set up
         });
 
 
