@@ -645,7 +645,6 @@
             });
         }
 
-        // Updated updatePagination to also render page numbers
         function updatePagination(pageable, totalElements) {
             const currentPageStart = document.getElementById('currentPageStart');
             const currentPageEnd = document.getElementById('currentPageEnd');
@@ -654,7 +653,7 @@
             const nextPageBtn = document.getElementById('nextPage');
             const prevPageMobileBtn = document.getElementById('prevPageMobile');
             const nextPageMobileBtn = document.getElementById('nextPageMobile');
-            const pageNumbersContainer = document.getElementById('pageNumbers'); // New element for page numbers
+            const pageNumbersContainer = document.getElementById('pageNumbers');
 
             if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
             if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements, totalElements);
@@ -665,9 +664,8 @@
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
 
-            // Render page numbers
             if (pageNumbersContainer) {
-                pageNumbersContainer.innerHTML = ''; // Clear previous page numbers
+                pageNumbersContainer.innerHTML = '';
                 const totalPages = pageable.totalPages;
                 for (let i = 0; i < totalPages; i++) {
                     const pageButton = document.createElement('button');
@@ -692,54 +690,36 @@
             updateCharts(alerts);
         }
 
-        function updateCharts(alerts) {
-            const typeCounts = {};
-            const statusCounts = {};
-            const typeLabels = new Set();
-            const statusLabels = new Set();
+        function initializeCharts() {
+            const alertsByTypeCtx = document.getElementById('alertsByTypeChart');
+            if (alertsByTypeCtx) {
+                alertsByTypeChart = new Chart(alertsByTypeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } }
+                    }
+                });
+            } else { console.error("Element #alertsByTypeChart not found."); }
 
-            alerts.forEach(alert => {
-                typeCounts[alert.typeAlerte] = (typeCounts[alert.typeAlerte] || 0) + 1;
-                typeLabels.add(alert.typeAlerte);
-
-                statusCounts[alert.statutAlerte] = (statusCounts[alert.statutAlerte] || 0) + 1;
-                statusLabels.add(alert.statutAlerte);
-            });
-
-            const finalTypeLabels = Array.from(typeLabels).sort();
-            const finalStatusLabels = Array.from(statusLabels).sort();
-
-            const typeColors = {
-                'Sanction': '#ef4444',
-                'PaysNonCooperant': '#f97316',
-                'PEP': '#8b5cf6',
-                'Other': '#64748b'
-            };
-            const dynamicTypeBackgroundColors = finalTypeLabels.map(label => typeColors[label] || '#64748b');
-
-            if (alertsByTypeChart) {
-                alertsByTypeChart.data.labels = finalTypeLabels;
-                alertsByTypeChart.data.datasets[0].data = finalTypeLabels.map(label => typeCounts[label]);
-                alertsByTypeChart.data.datasets[0].backgroundColor = dynamicTypeBackgroundColors;
-                alertsByTypeChart.update();
-            } else { console.error("alertsByTypeChart object not found."); }
-
-            const statusColors = {
-                'Ouverte': '#f59e0b',
-                'En cours de traitement': '#3b82f6',
-                'Fermée - Vrai positif': '#10b981',
-                'Fermée - Faux positif': '#64748b',
-                'Fermée - Résolu': '#10b981'
-            };
-            const dynamicStatusBackgroundColors = finalStatusLabels.map(label => statusColors[label] || '#64748b');
-
-
-            if (alertsByStatusChart) {
-                alertsByStatusChart.data.labels = finalStatusLabels;
-                alertsByStatusChart.data.datasets[0].data = finalStatusLabels.map(label => statusCounts[label]);
-                alertsByStatusChart.data.datasets[0].backgroundColor = dynamicStatusBackgroundColors;
-                alertsByStatusChart.update();
-            } else { console.error("alertsByStatusChart object not found."); }
+            const alertsByStatusCtx = document.getElementById('alertsByStatusChart');
+            if (alertsByStatusCtx) {
+                alertsByStatusChart = new Chart(alertsByStatusCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{ label: 'Alerts', data: [], backgroundColor: [], borderWidth: 0 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            } else { console.error("Element #alertsByStatusChart not found."); }
         }
 
         // --- Logique du Modal ---
@@ -829,12 +809,11 @@
         }
 
         // --- Logique Email Logs ---
-        let currentEmailLogFilters = { page: 0, size: 10 }; // Filters for email logs
+        let currentEmailLogFilters = { page: 0, size: 10 };
 
         async function fetchEmailLogs(params) {
             showLoading();
             const queryParams = new URLSearchParams(params).toString();
-            // REMPLACER PAR L'URL RÉELLE DE VOTRE API DE LOGS D'EMAIL
             const url = `${API_BASE_URL}/api/email-logs?${queryParams}`;
             try {
                 const response = await fetch(url);
@@ -842,7 +821,6 @@
                     const errorData = await response.json();
                     throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
                 }
-                // Simuler des données de logs si l'API n'est pas encore prête
                 const data = await response.json();
                  if (data.content && data.content.length === 0) {
                      // Simuler des logs si la réponse est vide
@@ -853,9 +831,7 @@
                      ];
                      data.totalElements = 3;
                      data.totalPages = 1;
-                     data.pageable.pageNumber = 0;
-                     data.pageable.pageSize = 10;
-                     data.last = true;
+                     data.pageable = { pageNumber: 0, pageSize: 10, last: true, numberOfElements: data.content.length }; // Assurez-vous que pageable est bien défini
                  }
                 return data;
 
@@ -901,7 +877,7 @@
             const nextPageBtn = document.getElementById('nextEmailLogPage');
             const prevPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
             const nextPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
-            const pageNumbersContainer = document.getElementById('emailLogPageNumbers'); // New element for email log page numbers
+            const pageNumbersContainer = document.getElementById('emailLogPageNumbers');
 
             if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
             if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements, totalElements);
@@ -912,9 +888,8 @@
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
 
-            // Render page numbers for email logs
             if (pageNumbersContainer) {
-                pageNumbersContainer.innerHTML = ''; // Clear previous page numbers
+                pageNumbersContainer.innerHTML = '';
                 const totalPages = pageable.totalPages;
                 for (let i = 0; i < totalPages; i++) {
                     const pageButton = document.createElement('button');
@@ -951,7 +926,6 @@
             });
             document.getElementById(sectionId).classList.add('active');
 
-            // Mise à jour du titre
             const mainContentTitle = document.getElementById('mainContentTitle');
             if (mainContentTitle) {
                 if (sectionId === 'dashboardSection') {
@@ -963,7 +937,6 @@
                 }
             }
 
-            // Mettre à jour l'état actif dans la sidebar
             document.querySelectorAll('nav a').forEach(link => {
                 link.classList.remove('bg-blue-50', 'text-primary');
                 link.classList.add('text-gray-700', 'hover:bg-gray-100');
@@ -975,7 +948,6 @@
                 activeLink.classList.add('bg-blue-50', 'text-primary');
             }
 
-            // Recharger les données si nécessaire
             if (sectionId === 'alertsSection') {
                 loadAlerts();
             } else if (sectionId === 'emailLogsSection') {
@@ -984,7 +956,8 @@
         }
 
         // --- Initialisation et Événements généraux ---
-        document.addEventListener('DOMContentLoaded', () => {
+        // Cette fonction contient les assignations des éléments DOM et les écouteurs d'événements.
+        function initializeUIEventListeners() {
             // Assigner les éléments DOM aux variables globales après que le DOM soit chargé
             modal = document.getElementById('alertModal');
             closeModal = document.getElementById('closeModal');
@@ -992,6 +965,176 @@
             saveChangesBtn = document.getElementById('saveChangesBtn');
             resendEmailBtn = document.getElementById('resendEmailBtn');
 
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.querySelector('.sidebar').classList.toggle('open');
+                });
+            } else { console.error("Element #sidebarToggle not found."); }
+
+            const prevPageBtn = document.getElementById('prevPage');
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', () => {
+                    if (currentFilters.page > 0) {
+                        currentFilters.page--;
+                        loadAlerts();
+                    }
+                });
+            } else { console.error("Element #prevPage not found."); }
+
+            const nextPageBtn = document.getElementById('nextPage');
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', () => {
+                    currentFilters.page++;
+                    loadAlerts();
+                });
+            } else { console.error("Element #nextPage not found."); }
+
+            const prevPageMobileBtn = document.getElementById('prevPageMobile');
+            if (prevPageMobileBtn) {
+                prevPageMobileBtn.addEventListener('click', () => {
+                    if (currentFilters.page > 0) {
+                        currentFilters.page--;
+                        loadAlerts();
+                    }
+                });
+            } else { console.error("Element #prevPageMobile not found."); }
+
+            const nextPageMobileBtn = document.getElementById('nextPageMobile');
+            if (nextPageMobileBtn) {
+                nextPageMobileBtn.addEventListener('click', () => {
+                    currentFilters.page++;
+                    loadAlerts();
+                });
+            } else { console.error("Element #nextPageMobile not found."); }
+
+            const filterButton = document.getElementById('filterButton');
+            if (filterButton) {
+                filterButton.addEventListener('click', () => {
+                    currentFilters.clientId = document.getElementById('filterClient').value;
+                    currentFilters.status = document.getElementById('filterStatus').value;
+                    currentFilters.page = 0; // Reset to first page on filter change
+                    loadAlerts();
+                });
+            } else { console.error("Element #filterButton not found."); }
+
+            document.querySelectorAll('th[data-sort-by]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortBy = header.dataset.sortBy;
+                    if (currentFilters.sortBy === sortBy) {
+                        currentFilters.sortDir = currentFilters.sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentFilters.sortBy = sortBy;
+                        currentFilters.sortDir = 'desc'; // Default sort direction for new sort column
+                    }
+                    loadAlerts();
+                });
+            });
+
+            if (saveChangesBtn) {
+                saveChangesBtn.addEventListener('click', async () => {
+                    if (!currentAlertId) return;
+
+                    const newCommentText = document.getElementById('newComment').value;
+                    const newStatusValue = document.getElementById('changeStatusSelect').value;
+
+                    if (!newCommentText && !newStatusValue) {
+                        alert('Veuillez ajouter un commentaire ou changer le statut.');
+                        return;
+                    }
+
+                    try {
+                        const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText);
+                        alert('Alerte mise à jour avec succès !');
+                        if (modal) modal.classList.add('hidden');
+                        loadAlerts();
+                    } catch (error) {
+                        alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
+                        console.error(error);
+                    }
+                });
+            } else { console.error("Element #saveChangesBtn not found."); }
+
+            if (resendEmailBtn) {
+                resendEmailBtn.addEventListener('click', async () => {
+                    if (!currentAlertId) return;
+
+                    if (!confirm('Êtes-vous sûr de vouloir renvoyer l\'e-mail pour cette alerte ?')) {
+                        return;
+                    }
+
+                    try {
+                        const responseText = await resendAlertEmail(currentAlertId);
+                        alert('E-mail de renvoi : ' + responseText);
+                    } catch (error) {
+                        alert('Erreur lors du renvoi de l\'e-mail : ' + error.message);
+                        console.error(error);
+                    }
+                });
+            } else { console.error("Element #resendEmailBtn not found."); }
+
+            if (closeModal) {
+                closeModal.addEventListener('click', function() {
+                    if (modal) modal.classList.add('hidden');
+                });
+            } else { console.error("Element #closeModal not found."); }
+
+            if (cancelModal) {
+                cancelModal.addEventListener('click', function() {
+                    if (modal) modal.classList.add('hidden');
+                });
+            } else { console.error("Element #cancelModal not found."); }
+
+            if (modal) {
+                window.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            } else { console.error("Element #alertModal not found."); }
+
+
+            // Pagination email logs (déjà en place, juste s'assurer qu'elle est dans cette fonction)
+            const prevEmailLogPageBtn = document.getElementById('prevEmailLogPage');
+            if (prevEmailLogPageBtn) {
+                prevEmailLogPageBtn.addEventListener('click', () => {
+                    if (currentEmailLogFilters.page > 0) {
+                        currentEmailLogFilters.page--;
+                        loadEmailLogs();
+                    }
+                });
+            }
+
+            const nextEmailLogPageBtn = document.getElementById('nextEmailLogPage');
+            if (nextEmailLogPageBtn) {
+                nextEmailLogPageBtn.addEventListener('click', () => {
+                    currentEmailLogFilters.page++;
+                    loadEmailLogs();
+                });
+            }
+
+            const prevEmailLogPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
+            if (prevEmailLogPageMobileBtn) {
+                prevEmailLogPageMobileBtn.addEventListener('click', () => {
+                    if (currentEmailLogFilters.page > 0) {
+                        currentEmailLogFilters.page--;
+                        loadEmailLogs();
+                    }
+                });
+            }
+
+            const nextEmailLogPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
+            if (nextEmailLogPageMobileBtn) {
+                nextEmailLogPageMobileBtn.addEventListener('click', () => {
+                    currentEmailLogFilters.page++;
+                    loadEmailLogs();
+                });
+            }
+        }
+
+
+        // Initial load of alerts when the page is ready
+        document.addEventListener('DOMContentLoaded', () => {
             initializeCharts(); // Initialiser les graphiques
             initializeUIEventListeners(); // Mettre en place tous les écouteurs d'événements
             loadAlerts(); // Charger les alertes initiales pour la section Dashboard
@@ -1014,79 +1157,7 @@
                 e.preventDefault();
                 showSection('emailLogsSection');
             });
-
-            // Pagination email logs
-            const prevEmailLogPageBtn = document.getElementById('prevEmailLogPage');
-            if (prevEmailLogPageBtn) {
-                prevEmailLogPageBtn.addEventListener('click', () => {
-                    if (currentEmailLogFilters.page > 0) {
-                        currentEmailLogFilters.page--;
-                        loadEmailLogs();
-                    }
-                });
-            } else { console.error("Element #prevEmailLogPage not found."); }
-
-            const nextEmailLogPageBtn = document.getElementById('nextEmailLogPage');
-            if (nextEmailLogPageBtn) {
-                nextEmailLogPageBtn.addEventListener('click', () => {
-                    currentEmailLogFilters.page++;
-                    loadEmailLogs();
-                });
-            } else { console.error("Element #nextEmailLogPage not found."); }
-
-            const prevEmailLogPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
-            if (prevEmailLogPageMobileBtn) {
-                prevEmailLogPageMobileBtn.addEventListener('click', () => {
-                    if (currentEmailLogFilters.page > 0) {
-                        currentEmailLogFilters.page--;
-                        loadEmailLogs();
-                    }
-                });
-            } else { console.error("Element #prevEmailLogPageMobile not found."); }
-
-            const nextEmailLogPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
-            if (nextEmailLogPageMobileBtn) {
-                nextEmailLogPageMobileBtn.addEventListener('click', () => {
-                    currentEmailLogFilters.page++;
-                    loadEmailLogs();
-                });
-            } else { console.error("Element #nextEmailLogPageMobile not found."); }
-
         });
-
-
-        function initializeCharts() {
-            const alertsByTypeCtx = document.getElementById('alertsByTypeChart');
-            if (alertsByTypeCtx) {
-                alertsByTypeChart = new Chart(alertsByTypeCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: [],
-                        datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'right' } }
-                    }
-                });
-            } else { console.error("Element #alertsByTypeChart not found."); }
-
-            const alertsByStatusCtx = document.getElementById('alertsByStatusChart');
-            if (alertsByStatusCtx) {
-                alertsByStatusChart = new Chart(alertsByStatusCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: [],
-                        datasets: [{ label: 'Alerts', data: [], backgroundColor: [], borderWidth: 0 }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            } else { console.error("Element #alertsByStatusChart not found."); }
-        }
-
     </script>
 </body>
 </html>
