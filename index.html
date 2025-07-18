@@ -74,7 +74,7 @@
             to { transform: rotate(360deg); }
         }
         /* Masquer le loader après le chargement initial */
-        #loadingOverlay.hidden { /* MODIFIÉ: Utilise la classe hidden */
+        #loadingOverlay.hidden {
             display: none;
         }
     </style>
@@ -723,55 +723,25 @@
         }
 
         function updateCharts(alerts) {
-            // Initialisation dynamique des compteurs et labels
-            const typeCounts = {};
-            const statusCounts = {};
-            const typeLabels = new Set();
-            const statusLabels = new Set();
+            const typeCounts = { 'Sanction': 0, 'Non-Cooperative': 0, 'PEP': 0, 'Other': 0 };
+            const statusCounts = { 'Ouverte': 0, 'En cours de traitement': 0, 'Fermée - Vrai positif': 0, 'Fermée - Faux positif': 0 };
 
             alerts.forEach(alert => {
-                // Pour les types d'alerte
-                typeCounts[alert.typeAlerte] = (typeCounts[alert.typeAlerte] || 0) + 1;
-                typeLabels.add(alert.typeAlerte);
+                if (typeCounts.hasOwnProperty(alert.typeAlerte)) {
+                    typeCounts[alert.typeAlerte]++;
+                } else {
+                    typeCounts['Other']++;
+                }
 
-                // Pour les statuts d'alerte
-                statusCounts[alert.statutAlerte] = (statusCounts[alert.statutAlerte] || 0) + 1;
-                statusLabels.add(alert.statutAlerte);
+                if (statusCounts.hasOwnProperty(alert.statutAlerte)) {
+                    statusCounts[alert.statutAlerte]++;
+                }
             });
 
-            // Conversion des Sets en tableaux pour les labels
-            const finalTypeLabels = Array.from(typeLabels).sort(); // Tri alphabétique
-            const finalStatusLabels = Array.from(statusLabels).sort(); // Tri alphabétique
-
-            // Couleurs pour les types d'alerte (vous pouvez les personnaliser)
-            const typeColors = {
-                'Sanction': '#ef4444', // red
-                'PaysNonCooperant': '#f97316', // orange
-                'PEP': '#8b5cf6', // purple
-                'Other': '#64748b' // gray
-            };
-            const dynamicTypeBackgroundColors = finalTypeLabels.map(label => typeColors[label] || '#64748b'); // Fallback to 'Other' color
-
-            // Couleurs pour les statuts d'alerte (vous pouvez les personnaliser)
-            const statusColors = {
-                'Ouverte': '#f59e0b', // yellow
-                'En cours de traitement': '#3b82f6', // blue
-                'Fermée - Vrai positif': '#10b981', // green
-                'Fermée - Faux positif': '#64748b', // gray
-                'Fermée - Résolu': '#10b981' // green (si vous utilisez ce statut)
-            };
-            const dynamicStatusBackgroundColors = finalStatusLabels.map(label => statusColors[label] || '#64748b');
-
-            // Mise à jour du graphique par type
-            alertsByTypeChart.data.labels = finalTypeLabels;
-            alertsByTypeChart.data.datasets[0].data = finalTypeLabels.map(label => typeCounts[label]);
-            alertsByTypeChart.data.datasets[0].backgroundColor = dynamicTypeBackgroundColors;
+            alertsByTypeChart.data.datasets[0].data = Object.values(typeCounts);
             alertsByTypeChart.update();
 
-            // Mise à jour du graphique par statut
-            alertsByStatusChart.data.labels = finalStatusLabels;
-            alertsByStatusChart.data.datasets[0].data = finalStatusLabels.map(label => statusCounts[label]);
-            alertsByStatusChart.data.datasets[0].backgroundColor = dynamicStatusBackgroundColors;
+            alertsByStatusChart.data.datasets[0].data = Object.values(statusCounts);
             alertsByStatusChart.update();
         }
 
@@ -792,14 +762,7 @@
                 document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte; 
 
                 document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
-                let country = 'N/A';
-                if (alertDetails.typeAlerte === 'PaysNonCooperant' && alertDetails.descriptionAlerte) {
-                    const match = alertDetails.descriptionAlerte.match(/pays du tiers \((.*?)\)/);
-                    if (match && match[1]) {
-                        country = match[1];
-                    }
-                }
-                document.getElementById('modalCountry').textContent = country; 
+                document.getElementById('modalCountry').textContent = 'N/A'; // L'entité AmlAlert ne contient pas directement le pays de domiciliation du tiers.
                 document.getElementById('modalCounterpartyType').textContent = 'N/A'; 
                 document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte; 
                 document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb;
@@ -862,8 +825,8 @@
                 const response = await fetchAlerts(currentFilters); // APPEL API RÉEL
                 renderAlertsTable(response.content);
                 updatePagination(response.pageable, response.totalElements);
-                // MODIFIÉ: Passe les données filtrées à updateSummaryCards pour les graphiques
-                updateSummaryCards(response.content); 
+                const allAlertsForSummary = await fetchAlerts({ size: 10000 }); // Récupère toutes les alertes pour les stats
+                updateSummaryCards(allAlertsForSummary.content); 
 
             } catch (error) {
                 alert('Erreur lors du chargement des alertes: ' + error.message);
@@ -873,8 +836,66 @@
             }
         }
 
-        // Fonction pour initialiser tous les écouteurs d'événements
-        function initializeUIEventListeners() {
+        // Attache les écouteurs d'événements après que le DOM soit complètement chargé
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialisation des graphiques Chart.js
+            const alertsByTypeCtx = document.getElementById('alertsByTypeChart'); // Get the canvas element
+            const alertsByTypeChart = new Chart(alertsByTypeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sanctions', 'Non-Cooperative', 'PEP', 'Other'],
+                    datasets: [{
+                        data: [], // Will be populated by updateCharts
+                        backgroundColor: [
+                            '#ef4444', // red
+                            '#f97316', // orange
+                            '#8b5cf6', // purple
+                            '#64748b'  // gray
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+
+            const alertsByStatusCtx = document.getElementById('alertsByStatusChart'); // Get the canvas element
+            const alertsByStatusChart = new Chart(alertsByStatusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Open', 'In Progress', 'Resolved', 'False Positive'],
+                    datasets: [{
+                        label: 'Alerts',
+                        data: [], // Will be populated by updateCharts
+                        backgroundColor: [
+                            '#f59e0b', // yellow
+                            '#3b82f6', // blue
+                            '#10b981', // green
+                            '#64748b'  // gray
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+
+            // Attachement des écouteurs d'événements
             const sidebarToggle = document.getElementById('sidebarToggle');
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
@@ -1009,73 +1030,6 @@
                     }
                 });
             } else { console.error("Element #alertModal not found."); }
-        }
-
-
-        // Initial load of alerts when the page is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            // AJOUT D'UN PETIT DÉLAI AVANT LE CHARGEMENT INITIAL POUR S'ASSURER QUE LE DOM EST PRÊT
-            setTimeout(() => {
-                loadAlerts(); // Charge les alertes au démarrage
-                initializeUIEventListeners(); // Appelle la fonction pour attacher les écouteurs
-            }, 100); // AJOUT D'UN DÉLAI DE 100ms
-        });
-
-
-        // Charts (initialization moved to loadAlerts for dynamic data)
-        const alertsByTypeCtx = document.getElementById('alertsByTypeChart'); // Get the canvas element
-        const alertsByTypeChart = new Chart(alertsByTypeCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Sanctions', 'Non-Cooperative', 'PEP', 'Other'],
-                datasets: [{
-                    data: [], // Will be populated by updateCharts
-                    backgroundColor: [
-                        '#ef4444', // red
-                        '#f97316', // orange
-                        '#8b5cf6', // purple
-                        '#64748b'  // gray
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    }
-                }
-            }
-        });
-
-        const alertsByStatusCtx = document.getElementById('alertsByStatusChart'); // Get the canvas element
-        const alertsByStatusChart = new Chart(alertsByStatusCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Open', 'In Progress', 'Resolved', 'False Positive'],
-                datasets: [{
-                    label: 'Alerts',
-                    data: [], // Will be populated by updateCharts
-                    backgroundColor: [
-                        '#f59e0b', // yellow
-                        '#3b82f6', // blue
-                        '#10b981', // green
-                        '#64748b'  // gray
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
         });
 
     </script>
