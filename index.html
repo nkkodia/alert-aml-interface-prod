@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AML Alert Dashboard</title>
-    <!-- Favicon -->
     <link rel="icon" href="https://placehold.co/32x32/1e40af/ffffff?text=AML" type="image/png">
-    <!-- Fin Favicon -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -87,14 +85,12 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- Overlay de chargement -->
     <div id="loadingOverlay">
         <div class="spinner"></div>
         <p class="ml-3 text-lg text-primary">Chargement...</p>
     </div>
 
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
         <div class="sidebar bg-white w-64 border-r border-gray-200 flex flex-col">
             <div class="p-4 border-b border-gray-200">
                 <h1 class="text-xl font-bold text-primary flex items-center">
@@ -154,9 +150,7 @@
             </div>
         </div>
 
-        <!-- Main content -->
         <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top navigation -->
             <header class="bg-white border-b border-gray-200 flex items-center justify-between p-4">
                 <div class="flex items-center">
                     <button id="sidebarToggle" class="md:hidden mr-4 text-gray-500">
@@ -177,11 +171,8 @@
                 </div>
             </header>
 
-            <!-- Main content area -->
             <main class="flex-1 overflow-y-auto p-4">
-                <!-- Dashboard Section -->
                 <section id="dashboardSection" class="content-section active">
-                    <!-- Summary cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div class="bg-white rounded-lg shadow p-4">
                             <div class="flex items-center justify-between">
@@ -233,7 +224,6 @@
                         </div>
                     </div>
 
-                    <!-- Charts -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                         <div class="bg-white rounded-lg shadow p-4">
                             <div class="flex items-center justify-between mb-4">
@@ -264,9 +254,7 @@
                     </div>
                 </section>
 
-                <!-- Alerts Section -->
                 <section id="alertsSection" class="content-section">
-                    <!-- Recent alerts -->
                     <div class="bg-white rounded-lg shadow overflow-hidden">
                         <div class="p-4 border-b border-gray-200 flex items-center justify-between">
                             <h3 class="font-medium text-gray-800">Recent Alerts</h3>
@@ -303,8 +291,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="alertsTableBody" class="bg-white divide-y divide-gray-200">
-                                    <!-- Alert rows will be injected here -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
@@ -328,7 +315,6 @@
                                             <span class="sr-only">Previous</span>
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
-                                        <!-- Page numbers will be generated here -->
                                         <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                             <span class="sr-only">Next</span>
                                             <i class="fas fa-chevron-right"></i>
@@ -340,7 +326,6 @@
                     </div>
                 </section>
 
-                <!-- Email Logs Section -->
                 <section id="emailLogsSection" class="content-section">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Email Sending Logs</h2>
                     <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -357,8 +342,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="emailLogsTableBody" class="bg-white divide-y divide-gray-200">
-                                    <!-- Email log rows will be injected here -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
@@ -382,7 +366,6 @@
                                             <span class="sr-only">Previous</span>
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
-                                        <!-- Page numbers will be generated here -->
                                         <button id="nextEmailLogPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                             <span class="sr-only">Next</span>
                                             <i class="fas fa-chevron-right"></i>
@@ -398,7 +381,6 @@
         </div>
     </div>
 
-    <!-- Alert Detail Modal (hidden by default) -->
     <div id="alertModal" class="fixed inset-0 overflow-y-auto hidden z-50">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -425,7 +407,7 @@
                                             <p class="text-sm"><span class="font-medium text-gray-700">Date:</span> <span id="modalDate"></span></p>
                                             <p class="text-sm"><span class="font-medium text-gray-700">Client:</span> <span id="modalClientName"></span></p>
                                             <p class="text-sm"><span class="font-medium text-gray-700">Type:</span> <span id="modalType"></span></p>
-                                            <p class="text-sm"><span class="font-medium text-gray-700">Status:</span> 
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Status:</span>
                                                 <span id="modalStatusBadge"></span>
                                             </p>
                                             <p class="text-sm"><span class="font-medium text-gray-700">Source:</span> <span id="modalSource"></span></p>
@@ -442,24 +424,26 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-800 mb-2">Alert History</h4>
                                     <div id="modalAlertHistory" class="space-y-3">
-                                        <!-- History items will be injected here -->
-                                    </div>
+                                        </div>
                                 </div>
-                                
+
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-800 mb-2">Comments</h4>
                                     <div id="modalComments" class="space-y-3 mb-4">
-                                        <!-- Comments will be injected here -->
-                                    </div>
+                                        </div>
                                     <div>
                                         <label for="newComment" class="block text-sm font-medium text-gray-700">Add Comment</label>
                                         <div class="mt-1">
                                             <textarea id="newComment" name="newComment" rows="3" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
                                         </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <label for="resendRecipientEmail" class="block text-sm font-medium text-gray-700">Recipient Email for Resend</label>
+                                        <input type="email" id="resendRecipientEmail" name="resendRecipientEmail" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md" value="admin@alertaml.com">
                                     </div>
                                 </div>
                             </div>
@@ -491,11 +475,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // REMPLACER PAR L'URL RÉELLE DE VOTRE BACKEND RENDER
-        const API_BASE_URL = "https://alert-aml-admin.onrender.com"; 
+        const API_BASE_URL = "https://alert-aml-admin.onrender.com";
 
         // Déclaration globale des variables de modale et de graphiques
-         modal, closeModal, cancelModal;
-         alertsByTypeChart, alertsByStatusChart;
+        // Initialisation à null est une bonne pratique.
+        let modal = null;
+        let closeModal = null; // Renommé 'closeModalBtn' dans l'explication précédente mais 'closeModal' est ok si c'est le nom de l'ID HTML
+        let cancelModal = null; // Idem
+        let alertsByTypeChart = null;
+        let alertsByStatusChart = null;
+        let saveChangesBtn = null; // Assurez-vous que ces boutons sont également déclarés globalement si utilisés partout
+        let resendEmailBtn = null;
+
 
         // --- Fonctions API Réelles ---
         async function fetchAlerts(params) {
@@ -551,9 +542,16 @@
         async function resendAlertEmail(alertId) {
             showLoading();
             const url = `${API_BASE_URL}/api/alerts/${alertId}/resend-email`;
-            
+
             // Récupérer l'adresse e-mail du destinataire depuis le champ de saisie
-            const recipientEmail = document.getElementById('resendRecipientEmail').value;
+            const recipientEmailInput = document.getElementById('resendRecipientEmail');
+            if (!recipientEmailInput) {
+                alert('Erreur: Le champ "Recipient Email for Resend" n\'a pas été trouvé dans la modale.');
+                hideLoading();
+                throw new Error('Recipient email input field not found.');
+            }
+            const recipientEmail = recipientEmailInput.value;
+
             if (!recipientEmail) {
                 alert('Veuillez entrer une adresse e-mail de destinataire.');
                 hideLoading();
@@ -736,7 +734,7 @@
                 document.getElementById('modalClientName').textContent = alertDetails.clientCabinetName;
                 document.getElementById('modalType').textContent = alertDetails.typeAlerte;
                 document.getElementById('modalStatusBadge').innerHTML = getStatusBadgeHtml(alertDetails.statutAlerte);
-                document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte; 
+                document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte;
 
                 document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
                 let country = 'N/A';
@@ -746,9 +744,9 @@
                         country = match[1];
                     }
                 }
-                document.getElementById('modalCountry').textContent = country; 
-                document.getElementById('modalCounterpartyType').textContent = 'N/A'; 
-                document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte; 
+                document.getElementById('modalCountry').textContent = country;
+                document.getElementById('modalCounterpartyType').textContent = 'N/A';
+                document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte;
                 document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb;
 
                 const modalAlertHistory = document.getElementById('modalAlertHistory');
@@ -787,13 +785,20 @@
                 ` : '<p class="text-sm text-gray-500">Aucun commentaire.</p>';
 
 
-                document.getElementById('newComment').value = ''; 
-                document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte; 
+                document.getElementById('newComment').value = '';
+                document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte;
 
                 // MODIFIÉ: Pré-remplir le champ de destinataire d'e-mail avec l'adresse admin par défaut
-                document.getElementById('resendRecipientEmail').value = 'admin@alertaml.com'; 
+                const resendRecipientEmailInput = document.getElementById('resendRecipientEmail');
+                if (resendRecipientEmailInput) {
+                    resendRecipientEmailInput.value = 'admin@alertaml.com';
+                }
 
-                modal.classList.remove('hidden');
+                if (modal) { // Check if modal has been assigned
+                    modal.classList.remove('hidden');
+                } else {
+                    console.error("Modal element is not initialized.");
+                }
             } catch (error) {
                 alert('Erreur lors du chargement de l\'alerte: ' + error.message);
                 console.error(error);
@@ -822,22 +827,16 @@
             }
         }
 
-        // Déclaration des variables de modale à une portée plus large
-        let modal = null;
-        let closeModal = null;
-        let cancelModal = null;
-
         // Fonction pour initialiser tous les écouteurs d'événements
         function initializeUIEventListeners() {
             // Assignation des variables de modale ici, après que le DOM soit prêt
-            const modalElement = document.getElementById('alertModal'); 
-            const closeModalElement = document.getElementById('closeModal');
-            const cancelModalElement = document.getElementById('cancelModal');
+            // Nous assignons les éléments DOM aux variables 'let' globales déjà déclarées.
+            modal = document.getElementById('alertModal');
+            closeModal = document.getElementById('closeModal');
+            cancelModal = document.getElementById('cancelModal');
+            saveChangesBtn = document.getElementById('saveChangesBtn');
+            resendEmailBtn = document.getElementById('resendEmailBtn');
 
-            // Assignation aux variables globales
-            modal = modalElement;
-            closeModal = closeModalElement;
-            cancelModal = cancelModalElement;
 
             const sidebarToggle = document.getElementById('sidebarToggle');
             if (sidebarToggle) {
@@ -905,7 +904,7 @@
                 });
             });
 
-            const saveChangesBtn = document.getElementById('saveChangesBtn');
+            // Utilisation des variables globales pour les écouteurs d'événements des boutons de la modale
             if (saveChangesBtn) {
                 saveChangesBtn.addEventListener('click', async () => {
                     if (!currentAlertId) return;
@@ -921,7 +920,7 @@
                     try {
                         const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
                         alert('Alerte mise à jour avec succès !');
-                        if (modal) modal.classList.add('hidden');
+                        if (modal) modal.classList.add('hidden'); // 'modal' est la variable globale
                         loadAlerts(); // Reload table to reflect changes
                     } catch (error) {
                         alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
@@ -930,7 +929,6 @@
                 });
             } else { console.error("Element #saveChangesBtn not found."); }
 
-            const resendEmailBtn = document.getElementById('resendEmailBtn');
             if (resendEmailBtn) {
                 resendEmailBtn.addEventListener('click', async () => {
                     if (!currentAlertId) return;
@@ -949,23 +947,23 @@
                 });
             } else { console.error("Element #resendEmailBtn not found."); }
 
-
-            if (closeModalElement) {
-                closeModalElement.addEventListener('click', function() {
-                    if (modalElement) modalElement.classList.add('hidden');
+            if (closeModal) { // 'closeModal' est la variable globale
+                closeModal.addEventListener('click', function() {
+                    if (modal) modal.classList.add('hidden'); // 'modal' est la variable globale
                 });
             } else { console.error("Element #closeModal not found."); }
-            
-            if (cancelModalElement) {
-                cancelModalElement.addEventListener('click', function() {
-                    if (modalElement) modalElement.classList.add('hidden');
+
+            if (cancelModal) { // 'cancelModal' est la variable globale
+                cancelModal.addEventListener('click', function() {
+                    if (modal) modal.classList.add('hidden'); // 'modal' est la variable globale
                 });
             } else { console.error("Element #cancelModal not found."); }
-            
-            if (modalElement) {
+
+            // Écouteur d'événement pour fermer la modale en cliquant en dehors
+            if (modal) { // 'modal' est la variable globale
                 window.addEventListener('click', function(event) {
-                    if (event.target === modalElement) {
-                        modalElement.classList.add('hidden');
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
                     }
                 });
             } else { console.error("Element #alertModal not found."); }
@@ -975,14 +973,10 @@
         // Initial load of alerts when the page is ready
         document.addEventListener('DOMContentLoaded', () => {
             initializeCharts();
-            loadAlerts();
-            initializeUIEventListeners();
+            initializeUIEventListeners(); // Important: call this AFTER the DOM is loaded
+            loadAlerts(); // This can be called after UI listeners are set up
         });
 
-
-        // Charts (initialization moved to loadAlerts for dynamic data)
-        alertsByTypeChart;
-        alertsByStatusChart;
 
         function initializeCharts() {
             const alertsByTypeCtx = document.getElementById('alertsByTypeChart');
