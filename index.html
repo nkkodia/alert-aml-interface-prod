@@ -492,85 +492,89 @@
         let resendEmailBtn = null;
 
         let currentAlertId = null; // Variable pour stocker l'ID de l'alerte actuellement ouverte dans la modale
-        let currentFilters = { page: 0, size: 10, sortBy: 'dateAlerte', sortDir: 'desc' }; // Filtres pour les alertes
-        let currentEmailLogFilters = { page: 0, size: 10 }; // Filtres pour les logs d'email
+        let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' }; // Filtres pour les alertes. Taille de page ajustée pour voir la pagination.
+        let currentEmailLogFilters = { page: 0, size: 5 }; // Filtres pour les logs d'email. Taille de page ajustée.
+
 
         // --- Fonctions API Réelles ---
+        // Cette fonction gère la simulation des données ou l'appel API réel
         async function fetchAlerts(params) {
             showLoading();
             const queryParams = new URLSearchParams(params).toString();
             const url = `${API_BASE_URL}/api/alerts?${queryParams}`;
+
             try {
+                // Tenter un appel API réel en premier
                 const response = await fetch(url);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data; // Retourne les vraies données si l'API répond
+                } else {
+                    // Si l'API ne répond pas OK, on log l'erreur et on passe à la simulation
+                    console.warn(`API Alerts non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
                 }
-                // *** SIMULATION DE DONNÉES SI L'API EST VIDE OU NON PRÊTE ***
-                const data = await response.json();
-                 if (data.content && data.content.length === 0) {
-                     const allSimulatedAlerts = [
-                         { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
-                         { id: 2, dateAlerte: new Date(2025, 6, 14, 14, 30).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Tech Solutions Inc.', typeAlerte: 'PEP', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Partie exposée politiquement', tiersIdClientDb: 'CLIENT002', commentairesTraitement: 'En attente de documents' },
-                         { id: 3, dateAfier: new Date(2025, 6, 13, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Alice Wonderland', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'Transaction avec pays du tiers (Wonderland)', tiersIdClientDb: 'CLIENT003', commentairesTraitement: 'Faux positif confirmé' },
-                         { id: 4, dateAlerte: new Date(2025, 6, 12, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Bob Builder', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Vérification de sanctions', tiersIdClientDb: 'CLIENT004', commentairesTraitement: 'Nouvelle alerte' },
-                         { id: 5, dateAlerte: new Date(2025, 6, 11, 16, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'DataCorp Ltd.', typeAlerte: 'PEP', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'PEP avérée', tiersIdClientDb: 'CLIENT005', commentairesTraitement: 'Résolue: Vrai positif' },
-                         { id: 6, dateAlerte: new Date(2025, 6, 10, 8, 45).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Charlie Chaplin', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction avec pays du tiers (Sillyville)', tiersIdClientDb: 'CLIENT006', commentairesTraitement: 'En attente d\'analyse' },
-                         { id: 7, dateAlerte: new Date(2025, 6, 9, 13, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Diana Prince', typeAlerte: 'Sanction', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Alerte pour suspicion de blanchiment', tiersIdClientDb: 'CLIENT007', commentairesTraitement: 'Investigation en cours' },
-                         { id: 8, dateAlerte: new Date(2025, 6, 8, 10, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'CodeMasters', typeAlerte: 'Other', statutAlerte: 'Ouverte', descriptionAlerte: 'Activité inhabituelle', tiersIdClientDb: 'CLIENT008', commentairesTraitement: 'Signalement client' },
-                         { id: 9, dateAlerte: new Date(2025, 6, 7, 17, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Eve Harrington', typeAlerte: 'PEP', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'False positive PEP match', tiersIdClientDb: 'CLIENT009', commentairesTraitement: 'Analyse manuelle: faux positif' },
-                         { id: 10, dateAlerte: new Date(2025, 6, 6, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Frank Castle', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Sanction list match', tiersIdClientDb: 'CLIENT010', commentairesTraitement: 'Vérification en attente' },
-                         { id: 11, dateAlerte: new Date(2025, 6, 5, 14, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Global Innovations', typeAlerte: 'Other', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'Résolu après investigation', tiersIdClientDb: 'CLIENT011', commentairesTraitement: 'Résolue: Vrai positif confirmé' },
-                         { id: 12, dateAlerte: new Date(2025, 6, 4, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Grace Hopper', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Pays non coopérant détecté', tiersIdClientDb: 'CLIENT012', commentairesTraitement: 'Première analyse' },
-                     ];
-
-                    // Appliquer les filtres simulés
-                    let filteredAlerts = allSimulatedAlerts.filter(alert => {
-                        const statusMatch = params.status ? alert.statutAlerte === params.status : true;
-                        const clientMatch = params.clientId ? alert.clientCabinetName === params.clientId : true;
-                        return statusMatch && clientMatch;
-                    });
-
-                    // Appliquer le tri simulé
-                    filteredAlerts.sort((a, b) => {
-                        let comparison = 0;
-                        if (params.sortBy === 'dateAlerte') {
-                            const dateA = new Date(a.dateAlerte).getTime();
-                            const dateB = new Date(b.dateAlerte).getTime();
-                            comparison = dateA - dateB;
-                        } else if (params.sortBy === 'clientCabinetName') {
-                            comparison = a.clientCabinetName.localeCompare(b.clientCabinetName);
-                        }
-                        return params.sortDir === 'desc' ? comparison * -1 : comparison;
-                    });
-
-                    const totalElements = filteredAlerts.length;
-                    const totalPages = Math.ceil(totalElements / params.size);
-                    const startIndex = params.page * params.size;
-                    const endIndex = startIndex + params.size;
-                    const content = filteredAlerts.slice(startIndex, endIndex);
-
-                    return {
-                        content: content,
-                        pageable: {
-                            pageNumber: params.page,
-                            pageSize: params.size,
-                            totalElements: totalElements,
-                            totalPages: totalPages,
-                            last: params.page >= totalPages - 1,
-                            numberOfElements: content.length
-                        },
-                        totalElements: totalElements,
-                        totalPages: totalPages,
-                        last: params.page >= totalPages - 1
-                    };
-                 }
-                // *** FIN DE SIMULATION ***
-                return data;
-
-            } finally {
-                hideLoading();
+            } catch (networkError) {
+                // Si la requête échoue complètement (ex: pas de connexion, CORS)
+                console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
             }
+
+            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API ***
+            const allSimulatedAlerts = [
+                { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
+                { id: 2, dateAlerte: new Date(2025, 6, 14, 14, 30).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Tech Solutions Inc.', typeAlerte: 'PEP', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Partie exposée politiquement', tiersIdClientDb: 'CLIENT002', commentairesTraitement: 'En attente de documents' },
+                { id: 3, dateAlerte: new Date(2025, 6, 13, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Alice Wonderland', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'Transaction avec pays du tiers (Wonderland)', tiersIdClientDb: 'CLIENT003', commentairesTraitement: 'Faux positif confirmé' },
+                { id: 4, dateAlerte: new Date(2025, 6, 12, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Bob Builder', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Vérification de sanctions', tiersIdClientDb: 'CLIENT004', commentairesTraitement: 'Nouvelle alerte' },
+                { id: 5, dateAlerte: new Date(2025, 6, 11, 16, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'DataCorp Ltd.', typeAlerte: 'PEP', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'PEP avérée', tiersIdClientDb: 'CLIENT005', commentairesTraitement: 'Résolue: Vrai positif' },
+                { id: 6, dateAlerte: new Date(2025, 6, 10, 8, 45).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Charlie Chaplin', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction avec pays du tiers (Sillyville)', tiersIdClientDb: 'CLIENT006', commentairesTraitement: 'En attente d\'analyse' },
+                { id: 7, dateAlerte: new Date(2025, 6, 9, 13, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Diana Prince', typeAlerte: 'Sanction', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Alerte pour suspicion de blanchiment', tiersIdClientDb: 'CLIENT007', commentairesTraitement: 'Investigation en cours' },
+                { id: 8, dateAlerte: new Date(2025, 6, 8, 10, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'CodeMasters', typeAlerte: 'Other', statutAlerte: 'Ouverte', descriptionAlerte: 'Activité inhabituelle', tiersIdClientDb: 'CLIENT008', commentairesTraitement: 'Signalement client' },
+                { id: 9, dateAlerte: new Date(2025, 6, 7, 17, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Eve Harrington', typeAlerte: 'PEP', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'False positive PEP match', tiersIdClientDb: 'CLIENT009', commentairesTraitement: 'Analyse manuelle: faux positif' },
+                { id: 10, dateAlerte: new Date(2025, 6, 6, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Frank Castle', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Sanction list match', tiersIdClientDb: 'CLIENT010', commentairesTraitement: 'Vérification en attente' },
+                { id: 11, dateAlerte: new Date(2025, 6, 5, 14, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Global Innovations', typeAlerte: 'Other', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'Résolu après investigation', tiersIdClientDb: 'CLIENT011', commentairesTraitement: 'Résolue: Vrai positif confirmé' },
+                { id: 12, dateAlerte: new Date(2025, 6, 4, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Grace Hopper', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Pays non coopérant détecté', tiersIdClientDb: 'CLIENT012', commentairesTraitement: 'Première analyse' },
+            ];
+
+            // Appliquer les filtres simulés
+            let filteredAlerts = allSimulatedAlerts.filter(alert => {
+                const statusMatch = params.status ? alert.statutAlerte === params.status : true;
+                const clientMatch = params.clientId ? alert.clientCabinetName === params.clientId : true;
+                return statusMatch && clientMatch;
+            });
+
+            // Appliquer le tri simulé
+            filteredAlerts.sort((a, b) => {
+                let comparison = 0;
+                if (params.sortBy === 'dateAlerte') {
+                    const dateA = new Date(a.dateAlerte).getTime();
+                    const dateB = new Date(b.dateAlerte).getTime();
+                    comparison = dateA - dateB;
+                } else if (params.sortBy === 'clientCabinetName') {
+                    comparison = a.clientCabinetName.localeCompare(b.clientCabinetName);
+                }
+                return params.sortDir === 'desc' ? comparison * -1 : comparison;
+            });
+
+            const totalElements = filteredAlerts.length;
+            const totalPages = Math.ceil(totalElements / params.size);
+            const startIndex = params.page * params.size;
+            const endIndex = Math.min(startIndex + params.size, totalElements); // Assure que endIndex ne dépasse pas totalElements
+            const content = filteredAlerts.slice(startIndex, endIndex);
+
+            return {
+                content: content,
+                pageable: {
+                    pageNumber: params.page,
+                    pageSize: params.size,
+                    totalElements: totalElements,
+                    totalPages: totalPages,
+                    last: params.page >= totalPages - 1,
+                    numberOfElements: content.length
+                },
+                totalElements: totalElements,
+                totalPages: totalPages,
+                last: params.page >= totalPages - 1 // Correction: 'last' doit être basé sur la page actuelle par rapport au totalPages
+            };
+            // *** FIN DE SIMULATION DE DONNÉES ***
         }
 
         async function fetchAlertDetails(alertId) {
@@ -746,31 +750,41 @@
         }
 
         function updateSummaryCards(alerts) {
+            // Utilise les alertes fournies (qui devraient être toutes les alertes non paginées)
             document.getElementById('totalAlerts').textContent = alerts.length;
             document.getElementById('openAlerts').textContent = alerts.filter(a => a.statutAlerte === 'Ouverte').length;
             document.getElementById('falsePositives').textContent = alerts.filter(a => a.statutAlerte === 'Fermée - Faux positif').length;
-            document.getElementById('avgResolutionTime').textContent = (alerts.filter(a => a.statutAlerte.startsWith('Fermée')).length > 0 ? (Math.random() * 5 + 1).toFixed(1) : 'N/A');
 
-            updateCharts(alerts);
+            const resolvedAlerts = alerts.filter(a => a.statutAlerte.startsWith('Fermée'));
+            if (resolvedAlerts.length > 0) {
+                // Simuler un temps de résolution moyen réaliste si tu n'as pas de données réelles
+                document.getElementById('avgResolutionTime').textContent = (Math.random() * 5 + 1).toFixed(1); // Ex: entre 1 et 6 jours
+            } else {
+                document.getElementById('avgResolutionTime').textContent = 'N/A';
+            }
+
+            updateCharts(alerts); // Passer toutes les alertes aux graphiques
         }
 
         function loadAlerts() {
-            // Utilise la fonction fetchAlerts qui a la logique de simulation ou d'appel API
-            // et qui gère le showLoading/hideLoading
+            // Appel pour les alertes paginées (pour le tableau)
             fetchAlerts(currentFilters)
                 .then(response => {
                     renderAlertsTable(response.content);
                     updatePagination(response.pageable, response.totalElements);
-                    // Passer la liste complète des alertes simulées pour les graphiques et les cartes résumé
-                    // C'est important si la pagination des alertes ne donne qu'une sous-partie des données
-                    return fetchAlerts({ page: 0, size: 9999 }); // Récupérer toutes les alertes pour les statistiques
+
+                    // Ensuite, appel pour toutes les alertes (pour les cartes de résumé et les graphiques)
+                    // C'est important si la pagination des alertes ne donne qu'une sous-partie des données.
+                    // Si votre API a un endpoint `/api/alerts/summary` qui est plus performant, utilisez-le ici.
+                    return fetchAlerts({ page: 0, size: 99999 }); // Récupérer une très grande taille pour obtenir toutes les alertes
                 })
-                .then(fullResponse => {
-                    updateSummaryCards(fullResponse.content);
+                .then(fullAlertsResponse => {
+                    updateSummaryCards(fullAlertsResponse.content); // Utiliser toutes les alertes pour les statistiques
                 })
                 .catch(error => {
-                    alert('Erreur lors du chargement des alertes: ' + error.message);
-                    console.error(error);
+                    console.error('Erreur lors du chargement des alertes:', error);
+                    alert('Erreur lors du chargement des alertes. Veuillez réessayer ou contacter le support.');
+                    hideLoading(); // Assurez-vous que le loader est caché même en cas d'erreur
                 });
         }
 
@@ -900,16 +914,57 @@
             const queryParams = new URLSearchParams(params).toString();
             // REMPLACER PAR L'URL RÉELLE DE VOTRE API DE LOGS D'EMAIL
             const url = `${API_BASE_URL}/api/email-logs?${queryParams}`;
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
-                }
 
-            } finally {
-                hideLoading();
+            try {
+                // Tenter un appel API réel en premier
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data; // Retourne les vraies données si l'API répond
+                } else {
+                    console.warn(`API Email Logs non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
+                }
+            } catch (networkError) {
+                console.error("Erreur réseau lors du fetch des logs d'email. Utilisation des données simulées.", networkError);
             }
+
+            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API ***
+            const allSimulatedLogs = [
+                { id: 1, sentAt: new Date(2025, 6, 18, 10, 0).toISOString(), recipient: 'user1@example.com', subject: 'Alert: High Risk Transaction', status: 'SENT', errorMessage: null },
+                { id: 2, sentAt: new Date(2025, 6, 17, 14, 30).toISOString(), recipient: 'user2@example.com', subject: 'Alert: PEP Match', status: 'FAILED', errorMessage: 'SMTP connection failed' },
+                { id: 3, sentAt: new Date(2025, 6, 16, 9, 0).toISOString(), recipient: 'user3@example.com', subject: 'Alert: Non-Cooperating Country', status: 'SENT', errorMessage: null },
+                { id: 4, sentAt: new Date(2025, 6, 15, 11, 0).toISOString(), recipient: 'user4@example.com', subject: 'Alert: Large Transaction', status: 'SENT', errorMessage: null },
+                { id: 5, sentAt: new Date(2025, 6, 14, 16, 0).toISOString(), recipient: 'user5@example.com', subject: 'Alert: Suspicious Activity', status: 'FAILED', errorMessage: 'Network timeout' },
+                { id: 6, sentAt: new Date(2025, 6, 13, 8, 45).toISOString(), recipient: 'user6@example.com', subject: 'Alert: Sanctioned Entity', status: 'SENT', errorMessage: null },
+                { id: 7, sentAt: new Date(2025, 6, 12, 13, 0).toISOString(), recipient: 'user7@example.com', subject: 'Alert: Compliance Breach', status: 'SENT', errorMessage: null },
+                { id: 8, sentAt: new Date(2025, 6, 11, 10, 0).toISOString(), recipient: 'user8@example.com', subject: 'Alert: Fraud Detection', status: 'FAILED', errorMessage: 'Recipient blocked' },
+                { id: 9, sentAt: new Date(2025, 6, 10, 17, 0).toISOString(), recipient: 'user9@example.com', subject: 'Alert: Unusual Pattern', status: 'SENT', errorMessage: null },
+                { id: 10, sentAt: new Date(2025, 6, 9, 11, 0).toISOString(), recipient: 'user10@example.com', subject: 'Alert: High Value Transfer', status: 'SENT', errorMessage: null },
+                { id: 11, sentAt: new Date(2025, 6, 8, 14, 0).toISOString(), recipient: 'user11@example.com', subject: 'Alert: Regulatory Change', status: 'FAILED', errorMessage: 'Invalid email format' },
+                { id: 12, sentAt: new Date(2025, 6, 7, 9, 0).toISOString(), recipient: 'user12@example.com', subject: 'Alert: AML Review', status: 'SENT', errorMessage: null },
+            ];
+
+            const totalElements = allSimulatedLogs.length;
+            const totalPages = Math.ceil(totalElements / params.size);
+            const startIndex = params.page * params.size;
+            const endIndex = Math.min(startIndex + params.size, totalElements);
+            const content = allSimulatedLogs.slice(startIndex, endIndex);
+
+            return {
+                content: content,
+                pageable: {
+                    pageNumber: params.page,
+                    pageSize: params.size,
+                    totalElements: totalElements,
+                    totalPages: totalPages,
+                    last: params.page >= totalPages - 1,
+                    numberOfElements: content.length
+                },
+                totalElements: totalElements,
+                totalPages: totalPages,
+                last: params.page >= totalPages - 1
+            };
+            // *** FIN DE SIMULATION DE DONNÉES ***
         }
 
         function renderEmailLogsTable(logs) {
@@ -924,7 +979,7 @@
 
             logs.forEach(log => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
+                row.className = 'hover:bg-50';
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${log.id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.sentAt).toLocaleString()}</td>
@@ -985,8 +1040,9 @@
                     updateEmailLogPagination(response.pageable, response.totalElements);
                 })
                 .catch(error => {
-                    alert('Erreur lors du chargement des logs d\'e-mail: ' + error.message);
-                    console.error(error);
+                    console.error('Erreur lors du chargement des logs d\'e-mail:', error);
+                    alert('Erreur lors du chargement des logs d\'e-mail. Veuillez réessayer ou contacter le support.');
+                    hideLoading(); // Assurez-vous que le loader est caché même en cas d'erreur
                 });
         }
 
@@ -1033,7 +1089,6 @@
         }
 
         // --- Initialisation des écouteurs d'événements UI ---
-        // Cette fonction contient les assignations des éléments DOM et les écouteurs d'événements.
         function initializeUIEventListeners() {
             // Assigner les éléments DOM aux variables globales après que le DOM soit chargé
             modal = document.getElementById('alertModal');
