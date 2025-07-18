@@ -496,29 +496,40 @@
         let currentEmailLogFilters = { page: 0, size: 5 }; // Filtres pour les logs d'email. Taille de page ajustée.
 
 
-        // --- Fonctions API Réelles ---
-        // Cette fonction gère la simulation des données ou l'appel API réel
+        // --- Fonctions d'affichage/masquage du loader ---
+        function showLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) { loadingOverlay.classList.remove('hidden'); }
+            console.log("Loader: showLoading");
+        }
+
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) { loadingOverlay.classList.add('hidden'); }
+            console.log("Loader: hideLoading");
+        }
+
+        // --- Fonctions API Réelles (ou simulation en cas d'échec) ---
         async function fetchAlerts(params) {
             showLoading();
             const queryParams = new URLSearchParams(params).toString();
             const url = `${API_BASE_URL}/api/alerts?${queryParams}`;
 
             try {
-                // Tenter un appel API réel en premier
                 const response = await fetch(url);
                 if (response.ok) {
                     const data = await response.json();
-                    return data; // Retourne les vraies données si l'API répond
+                    console.log("Fetch Alerts SUCCESS (API):", data);
+                    return data;
                 } else {
-                    // Si l'API ne répond pas OK, on log l'erreur et on passe à la simulation
-                    console.warn(`API Alerts non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
+                    console.warn(`API Alerts non disponible ou erreur HTTP: ${response.status}. Utilisation des données simulées.`);
                 }
             } catch (networkError) {
-                // Si la requête échoue complètement (ex: pas de connexion, CORS)
                 console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
             }
 
-            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API ***
+            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API OU ERREUR HTTP ***
+            console.log("Returning SIMULATED alerts data.");
             const allSimulatedAlerts = [
                 { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
                 { id: 2, dateAlerte: new Date(2025, 6, 14, 14, 30).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Tech Solutions Inc.', typeAlerte: 'PEP', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Partie exposée politiquement', tiersIdClientDb: 'CLIENT002', commentairesTraitement: 'En attente de documents' },
@@ -534,14 +545,12 @@
                 { id: 12, dateAlerte: new Date(2025, 6, 4, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Grace Hopper', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Pays non coopérant détecté', tiersIdClientDb: 'CLIENT012', commentairesTraitement: 'Première analyse' },
             ];
 
-            // Appliquer les filtres simulés
             let filteredAlerts = allSimulatedAlerts.filter(alert => {
                 const statusMatch = params.status ? alert.statutAlerte === params.status : true;
                 const clientMatch = params.clientId ? alert.clientCabinetName === params.clientId : true;
                 return statusMatch && clientMatch;
             });
 
-            // Appliquer le tri simulé
             filteredAlerts.sort((a, b) => {
                 let comparison = 0;
                 if (params.sortBy === 'dateAlerte') {
@@ -557,10 +566,11 @@
             const totalElements = filteredAlerts.length;
             const totalPages = Math.ceil(totalElements / params.size);
             const startIndex = params.page * params.size;
-            const endIndex = Math.min(startIndex + params.size, totalElements); // Assure que endIndex ne dépasse pas totalElements
+            const endIndex = Math.min(startIndex + params.size, totalElements);
             const content = filteredAlerts.slice(startIndex, endIndex);
 
-            return {
+            // Retourne une promesse résolue avec les données simulées après un petit délai
+            return new Promise(resolve => setTimeout(() => resolve({
                 content: content,
                 pageable: {
                     pageNumber: params.page,
@@ -572,9 +582,8 @@
                 },
                 totalElements: totalElements,
                 totalPages: totalPages,
-                last: params.page >= totalPages - 1 // Correction: 'last' doit être basé sur la page actuelle par rapport au totalPages
-            };
-            // *** FIN DE SIMULATION DE DONNÉES ***
+                last: params.page >= totalPages - 1
+            }), 300)); // Délai de 300ms pour simuler un chargement réseau
         }
 
         async function fetchAlertDetails(alertId) {
@@ -583,13 +592,31 @@
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                    console.warn(`API Alert Details non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
+                } else {
+                    const data = await response.json();
+                    return data;
                 }
-                return await response.json();
+            } catch (networkError) {
+                console.error("Erreur réseau lors du fetch des détails de l'alerte. Utilisation des données simulées.", networkError);
             } finally {
                 hideLoading();
             }
+
+            console.log("Returning SIMULATED alert details for ID:", alertId);
+            const simulatedDetail = {
+                id: alertId,
+                dateAlerte: new Date().toISOString(),
+                clientCabinetName: 'Client Simulé',
+                typeAlerte: 'Sanction',
+                statutAlerte: 'Ouverte',
+                descriptionAlerte: `Ceci est une description simulée pour l'alerte ${alertId}.`,
+                nomTiers: 'Nom Simulé',
+                denominationSocialeTiers: null,
+                tiersIdClientDb: `SIMU-${alertId}`,
+                commentairesTraitement: `Commentaire simulé 1.\nCommentaire simulé 2.`
+            };
+            return new Promise(resolve => setTimeout(() => resolve(simulatedDetail), 300));
         }
 
         async function updateAlertStatus(alertId, newStatus, comments) {
@@ -605,7 +632,12 @@
                     const errorData = await response.json();
                     throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
                 }
-                return await response.json();
+                const data = await response.json();
+                console.log(`Statut de l'alerte ${alertId} mis à jour :`, data);
+                return data;
+            } catch (error) {
+                console.error(`Erreur lors de la mise à jour du statut de l'alerte ${alertId}:`, error);
+                throw error;
             } finally {
                 hideLoading();
             }
@@ -642,22 +674,19 @@
                     const errorData = await response.json();
                     throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
                 }
-                return await response.text();
+                const responseText = await response.text();
+                console.log(`Mail renvoyé pour l'alerte ${alertId}:`, responseText);
+                return responseText;
+            } catch (error) {
+                console.error(`Erreur lors du renvoi du mail pour l'alerte ${alertId}:`, error);
+                throw error;
             } finally {
                 hideLoading();
             }
         }
 
         // --- Fonctions d'aide UI ---
-        function showLoading() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) { loadingOverlay.classList.remove('hidden'); }
-        }
-
-        function hideLoading() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) { loadingOverlay.classList.add('hidden'); }
-        }
+        // (showLoading et hideLoading définies plus haut)
 
         function getStatusBadgeHtml(status) {
             let colorClass = 'bg-gray-100 text-gray-800';
@@ -724,14 +753,25 @@
             const nextPageMobileBtn = document.getElementById('nextPageMobile');
             const pageNumbersContainer = document.getElementById('pageNumbers');
 
-            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
-            if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements, totalElements);
+            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : (pageable.pageNumber * pageable.pageSize) + 1;
+            if (currentPageEnd) currentPageEnd.textContent = totalElements === 0 ? 0 : Math.min(((pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements), totalElements);
             if (totalResults) totalResults.textContent = totalElements;
 
             if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
             if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
+
+            // Logique pour afficher/masquer la pagination si moins d'éléments que la taille de la page
+            const paginationControls = document.querySelector('#alertsSection .px-4.py-3.bg-gray-50');
+            if (paginationControls) {
+                if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) { // Si total <= pageSize et sur la première page
+                    paginationControls.classList.add('hidden'); // Masquer
+                } else {
+                    paginationControls.classList.remove('hidden'); // Afficher
+                }
+            }
+
 
             if (pageNumbersContainer) {
                 pageNumbersContainer.innerHTML = '';
@@ -774,17 +814,17 @@
                     updatePagination(response.pageable, response.totalElements);
 
                     // Ensuite, appel pour toutes les alertes (pour les cartes de résumé et les graphiques)
-                    // C'est important si la pagination des alertes ne donne qu'une sous-partie des données.
-                    // Si votre API a un endpoint `/api/alerts/summary` qui est plus performant, utilisez-le ici.
-                    return fetchAlerts({ page: 0, size: 99999 }); // Récupérer une très grande taille pour obtenir toutes les alertes
+                    return fetchAlerts({ page: 0, size: 99999 });
                 })
                 .then(fullAlertsResponse => {
-                    updateSummaryCards(fullAlertsResponse.content); // Utiliser toutes les alertes pour les statistiques
+                    updateSummaryCards(fullAlertsResponse.content);
                 })
                 .catch(error => {
                     console.error('Erreur lors du chargement des alertes:', error);
                     alert('Erreur lors du chargement des alertes. Veuillez réessayer ou contacter le support.');
-                    hideLoading(); // Assurez-vous que le loader est caché même en cas d'erreur
+                })
+                .finally(() => { // IMPORTANT: Le hideLoading final doit être ici
+                    hideLoading();
                 });
         }
 
@@ -916,11 +956,11 @@
             const url = `${API_BASE_URL}/api/email-logs?${queryParams}`;
 
             try {
-                // Tenter un appel API réel en premier
                 const response = await fetch(url);
                 if (response.ok) {
                     const data = await response.json();
-                    return data; // Retourne les vraies données si l'API répond
+                    console.log("Fetch Email Logs SUCCESS (API):", data);
+                    return data;
                 } else {
                     console.warn(`API Email Logs non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
                 }
@@ -928,7 +968,7 @@
                 console.error("Erreur réseau lors du fetch des logs d'email. Utilisation des données simulées.", networkError);
             }
 
-            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API ***
+            console.log("Returning SIMULATED email logs data.");
             const allSimulatedLogs = [
                 { id: 1, sentAt: new Date(2025, 6, 18, 10, 0).toISOString(), recipient: 'user1@example.com', subject: 'Alert: High Risk Transaction', status: 'SENT', errorMessage: null },
                 { id: 2, sentAt: new Date(2025, 6, 17, 14, 30).toISOString(), recipient: 'user2@example.com', subject: 'Alert: PEP Match', status: 'FAILED', errorMessage: 'SMTP connection failed' },
@@ -950,7 +990,7 @@
             const endIndex = Math.min(startIndex + params.size, totalElements);
             const content = allSimulatedLogs.slice(startIndex, endIndex);
 
-            return {
+            return new Promise(resolve => setTimeout(() => resolve({
                 content: content,
                 pageable: {
                     pageNumber: params.page,
@@ -963,8 +1003,7 @@
                 totalElements: totalElements,
                 totalPages: totalPages,
                 last: params.page >= totalPages - 1
-            };
-            // *** FIN DE SIMULATION DE DONNÉES ***
+            }), 300)); // Délai de 300ms pour simuler un chargement réseau
         }
 
         function renderEmailLogsTable(logs) {
@@ -979,7 +1018,7 @@
 
             logs.forEach(log => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-50';
+                row.className = 'hover:bg-gray-50';
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${log.id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.sentAt).toLocaleString()}</td>
@@ -1006,14 +1045,25 @@
             const nextPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
             const pageNumbersContainer = document.getElementById('emailLogPageNumbers');
 
-            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize + 1;
-            if (currentPageEnd) currentPageEnd.textContent = Math.min((totalElements === 0 ? 0 : pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements, totalElements);
+            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : (pageable.pageNumber * pageable.pageSize) + 1;
+            if (currentPageEnd) currentPageEnd.textContent = totalElements === 0 ? 0 : Math.min(((pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements), totalElements);
             if (totalResults) totalResults.textContent = totalElements;
 
             if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
             if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
             if (nextPageBtn) nextPageBtn.disabled = pageable.last;
             if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
+
+            // Logique pour afficher/masquer la pagination si moins d'éléments que la taille de la page
+            const paginationControls = document.querySelector('#emailLogsSection .px-4.py-3.bg-gray-50');
+            if (paginationControls) {
+                if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) {
+                    paginationControls.classList.add('hidden'); // Masquer
+                } else {
+                    paginationControls.classList.remove('hidden'); // Afficher
+                }
+            }
+
 
             if (pageNumbersContainer) {
                 pageNumbersContainer.innerHTML = '';
@@ -1032,8 +1082,6 @@
         }
 
         async function loadEmailLogs() {
-            // Utilise la fonction fetchEmailLogs qui a la logique de simulation ou d'appel API
-            // et qui gère le showLoading/hideLoading
             fetchEmailLogs(currentEmailLogFilters)
                 .then(response => {
                     renderEmailLogsTable(response.content);
@@ -1042,22 +1090,28 @@
                 .catch(error => {
                     console.error('Erreur lors du chargement des logs d\'e-mail:', error);
                     alert('Erreur lors du chargement des logs d\'e-mail. Veuillez réessayer ou contacter le support.');
-                    hideLoading(); // Assurez-vous que le loader est caché même en cas d'erreur
+                })
+                .finally(() => { // IMPORTANT: Le hideLoading final doit être ici
+                    hideLoading();
                 });
         }
 
 
         // --- Gestion des sections de contenu ---
         function showSection(sectionId) {
+            // Masquer toutes les sections
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
+
+            // Afficher la section cible
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
             }
 
 
+            // Mettre à jour le titre principal
             const mainContentTitle = document.getElementById('mainContentTitle');
             if (mainContentTitle) {
                 if (sectionId === 'dashboardSection') {
@@ -1069,6 +1123,7 @@
                 }
             }
 
+            // Mettre à jour l'état actif dans la sidebar
             document.querySelectorAll('nav a').forEach(link => {
                 link.classList.remove('bg-blue-50', 'text-primary');
                 link.classList.add('text-gray-700', 'hover:bg-gray-100');
@@ -1080,11 +1135,13 @@
                 activeLink.classList.add('bg-blue-50', 'text-primary');
             }
 
-            // Recharger les données si nécessaire
+            // Recharger les données spécifiques à la section
             if (sectionId === 'alertsSection') {
                 loadAlerts(); // Recharger les alertes lorsque la section Alertes est affichée
             } else if (sectionId === 'emailLogsSection') {
                 loadEmailLogs(); // Recharger les logs d'e-mail lorsque la section Email Logs est affichée
+            } else if (sectionId === 'dashboardSection') {
+                 loadAlerts(); // Le dashboard utilise aussi les données d'alertes pour les cartes et graphiques
             }
         }
 
@@ -1179,7 +1236,7 @@
                         const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText);
                         alert('Alerte mise à jour avec succès !');
                         if (modal) modal.classList.add('hidden');
-                        loadAlerts();
+                        loadAlerts(); // Recharger les alertes après une modification
                     } catch (error) {
                         alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
                         console.error(error);
@@ -1267,27 +1324,27 @@
 
         // --- Code exécuté lorsque le DOM est entièrement chargé ---
         document.addEventListener('DOMContentLoaded', () => {
-            initializeCharts(); // 1. Initialiser les graphiques Chart.js (peut être fait tôt)
+            initializeCharts(); // 1. Initialiser les graphiques Chart.js
             initializeUIEventListeners(); // 2. Initialiser les éléments UI et attacher les écouteurs
 
-            // 3. Configurer les écouteurs pour la navigation de la sidebar APRÈS que initializeUIEventListeners ait assigné les références
+            // 3. Configurer les écouteurs pour la navigation de la sidebar
             document.getElementById('dashboardLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                showSection('dashboardSection');
+                showSection('dashboardSection'); // Cette fonction appellera loadAlerts()
             });
 
             document.getElementById('alertsLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                showSection('alertsSection');
+                showSection('alertsSection'); // Cette fonction appellera loadAlerts()
             });
 
             document.getElementById('emailLogsLink').addEventListener('click', (e) => {
                 e.preventDefault();
-                showSection('emailLogsSection');
+                showSection('emailLogsSection'); // Cette fonction appellera loadEmailLogs()
             });
 
-            // 4. Afficher la section du tableau de bord par défaut (ceci appellera loadAlerts())
-            // Ceci doit être fait après que toutes les fonctions de chargement et d'affichage soient définies.
+            // 4. Afficher la section du tableau de bord par défaut au chargement initial.
+            // Cela déclenchera la première série de chargement de données via showSection.
             showSection('dashboardSection');
         });
     </script>
