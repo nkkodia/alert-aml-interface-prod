@@ -494,8 +494,8 @@
         const API_BASE_URL = "https://alert-aml-admin.onrender.com"; 
 
         // Déclaration globale des variables de modale et de graphiques
-        let modal, closeModal, cancelModal;
-        let alertsByTypeChart, alertsByStatusChart;
+         modal, closeModal, cancelModal;
+         alertsByTypeChart, alertsByStatusChart;
 
         // --- Fonctions API Réelles ---
         async function fetchAlerts(params) {
@@ -551,8 +551,24 @@
         async function resendAlertEmail(alertId) {
             showLoading();
             const url = `${API_BASE_URL}/api/alerts/${alertId}/resend-email`;
+            
+            // Récupérer l'adresse e-mail du destinataire depuis le champ de saisie
+            const recipientEmail = document.getElementById('resendRecipientEmail').value;
+            if (!recipientEmail) {
+                alert('Veuillez entrer une adresse e-mail de destinataire.');
+                hideLoading();
+                throw new Error('Recipient email is empty.');
+            }
+
             try {
-                const response = await fetch(url, { method: 'POST' });
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Important pour envoyer un corps JSON
+                    },
+                    body: JSON.stringify({ recipientEmail: recipientEmail }) // Envoyer l'adresse dans le corps
+                });
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
@@ -584,7 +600,7 @@
                 case 'Sanction': colorClass = 'bg-red-100 text-red-800'; break;
                 case 'PEP': colorClass = 'bg-purple-100 text-purple-800'; break;
                 case 'PaysNonCooperant': colorClass = 'bg-orange-100 text-orange-800'; break;
-                case 'Fermée - Résolu': colorClass = 'bg-green-100 text-green-800'; break; // Ajouté pour le nouveau statut
+                case 'Fermée - Résolu': colorClass = 'bg-green-100 text-green-800'; break;
             }
             return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}">${status}</span>`;
         }
@@ -774,6 +790,9 @@
                 document.getElementById('newComment').value = ''; 
                 document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte; 
 
+                // MODIFIÉ: Pré-remplir le champ de destinataire d'e-mail avec l'adresse admin par défaut
+                document.getElementById('resendRecipientEmail').value = 'admin@alertaml.com'; 
+
                 modal.classList.remove('hidden');
             } catch (error) {
                 alert('Erreur lors du chargement de l\'alerte: ' + error.message);
@@ -804,13 +823,11 @@
         }
 
         // Déclaration des variables de modale à une portée plus large
-        // REMPLACÉES PAR DES SÉLECTIONS DIRECTES DANS initializeUIEventListeners
-        // let modal, closeModal, cancelModal; 
+        let modal, closeModal, cancelModal;
 
         // Fonction pour initialiser tous les écouteurs d'événements
         function initializeUIEventListeners() {
             // Assignation des variables de modale ici, après que le DOM soit prêt
-            // Utilisation de const pour les variables locales à la fonction
             const modalElement = document.getElementById('alertModal'); 
             const closeModalElement = document.getElementById('closeModal');
             const cancelModalElement = document.getElementById('cancelModal');
@@ -902,7 +919,7 @@
                     try {
                         const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
                         alert('Alerte mise à jour avec succès !');
-                        if (modal) modal.classList.add('hidden'); // Vérification ajoutée
+                        if (modal) modal.classList.add('hidden');
                         loadAlerts(); // Reload table to reflect changes
                     } catch (error) {
                         alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
@@ -912,7 +929,7 @@
             } else { console.error("Element #saveChangesBtn not found."); }
 
             const resendEmailBtn = document.getElementById('resendEmailBtn');
-            if (resendEmailBtn) { // Check for existence
+            if (resendEmailBtn) {
                 resendEmailBtn.addEventListener('click', async () => {
                     if (!currentAlertId) return;
 
@@ -955,20 +972,16 @@
 
         // Initial load of alerts when the page is ready
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialisation des graphiques Chart.js
             initializeCharts();
-            // Puis charge les alertes, ce qui mettra à jour le tableau et les graphiques
             loadAlerts();
-            // Puis initialise les autres écouteurs d'événements
             initializeUIEventListeners();
         });
 
 
         // Charts (initialization moved to loadAlerts for dynamic data)
-        alertsByTypeChart; // Déclaration globale
-        alertsByStatusChart; // Déclaration globale
+        alertsByTypeChart;
+        alertsByStatusChart;
 
-        // Initialisation des graphiques Chart.js
         function initializeCharts() {
             const alertsByTypeCtx = document.getElementById('alertsByTypeChart');
             if (alertsByTypeCtx) {
@@ -976,20 +989,11 @@
                     type: 'doughnut',
                     data: {
                         labels: [],
-                        datasets: [{
-                            data: [],
-                            backgroundColor: [],
-                            borderWidth: 0
-                        }]
+                        datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                            }
-                        }
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } }
                     }
                 });
             } else { console.error("Element #alertsByTypeChart not found."); }
@@ -1000,28 +1004,15 @@
                     type: 'bar',
                     data: {
                         labels: [],
-                        datasets: [{
-                            label: 'Alerts',
-                            data: [],
-                            backgroundColor: [],
-                            borderWidth: 0
-                        }]
+                        datasets: [{ label: 'Alerts', data: [], backgroundColor: [], borderWidth: 0 }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
                     }
                 });
             } else { console.error("Element #alertsByStatusChart not found."); }
         }
-
-        // Appeler l'initialisation des charts au chargement du DOM
-        // document.addEventListener('DOMContentLoaded', initializeCharts); // Déjà appelé dans le bloc principal DOMContentLoaded
 
     </script>
 </body>
