@@ -505,10 +505,6 @@
         let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' };
         let currentEmailLogFilters = { page: 0, size: 5 };
 
-        let apiAlertTimeout = null;
-        const API_FAILURE_ALERT_DELAY_MS = 1500;
-
-
         // --- Fonctions d'affichage/masquage du loader ---
         function showLoading() {
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -533,14 +529,17 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log("Fetch Alerts SUCCESS (API):", data);
-                    return data;
+                    return data; // Retourne les vraies données de l'API
                 } else {
-                    console.warn(`API Alerts non disponible ou erreur HTTP: ${response.status}. Utilisation des données simulées.`);
+                    console.warn(`API Alerts non disponible ou erreur HTTP: ${response.status}. Tentative d'utilisation des données simulées.`);
+                    // PASSE À LA SIMULATION CI-DESSOUS
                 }
             } catch (networkError) {
-                console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
+                console.error("Erreur réseau lors du fetch des alertes. Tentative d'utilisation des données simulées.", networkError);
+                // PASSE À LA SIMULATION CI-DESSOUS
             }
 
+            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API OU ERREUR HTTP ***
             console.log("Returning SIMULATED alerts data.");
             const allSimulatedAlerts = [
                 { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
@@ -813,23 +812,17 @@
 
         function loadAlerts() {
             showLoading();
-            let timerId = setTimeout(() => {
-                alert("Erreur lors du chargement des alertes. L'API est peut-être inaccessible ou très lente. Affichage des données simulées.");
-            }, API_FAILURE_ALERT_DELAY_MS);
-
+            // Supprime la gestion du timer et de l'alerte ici
             fetchAlerts(currentFilters)
                 .then(response => {
-                    clearTimeout(timerId);
                     renderAlertsTable(response.content);
                     updatePagination(response.pageable, response.totalElements);
                     return fetchAlerts({ page: 0, size: 99999 });
                 })
                 .then(fullAlertsResponse => {
-                    clearTimeout(timerId);
                     updateSummaryCards(fullAlertsResponse.content);
                 })
                 .catch(error => {
-                    clearTimeout(timerId);
                     console.error('Erreur lors du chargement des alertes:', error);
                     console.warn("L'API réelle des alertes n'a pas pu être contactée. Affichage des données simulées.");
                 })
@@ -1085,18 +1078,12 @@
 
         async function loadEmailLogs() {
             showLoading();
-            let timerId = setTimeout(() => {
-                alert("Erreur lors du chargement des logs d'e-mail. L'API est peut-être inaccessible ou très lente. Affichage des données simulées.");
-            }, API_FAILURE_ALERT_DELAY_MS);
-
             fetchEmailLogs(currentEmailLogFilters)
                 .then(response => {
-                    clearTimeout(timerId);
                     renderEmailLogsTable(response.content);
                     updateEmailLogPagination(response.pageable, response.totalElements);
                 })
                 .catch(error => {
-                    clearTimeout(timerId);
                     console.error('Erreur lors du chargement des logs d\'e-mail:', error);
                     console.warn("L'API réelle des logs d'e-mail n'a pas pu être contactée. Affichage des données simulées.");
                 })
