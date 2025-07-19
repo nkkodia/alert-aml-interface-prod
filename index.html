@@ -349,7 +349,7 @@
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                             <div class="flex-1 flex justify-between sm:hidden">
-                                <button id="prevEmailLogPageMobile" class class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <button id="prevEmailLogPageMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                                     Previous
                                 </button>
                                 <button id="nextEmailLogPageMobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
@@ -445,11 +445,20 @@
                                             <textarea id="newComment" name="newComment" rows="3" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label for="resendRecipientEmail" class="block text-sm font-medium text-gray-700">Recipient Email for Resend</label>
-                                        <div class="mt-1">
-                                            <textarea id="resendRecipientEmail" name="resendRecipientEmail" rows="3" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                    <div class="mt-4">
+                                        <label for="resendRecipientEmail" class="block text-sm font-medium text-gray-700 mb-1">Email du Destinataire pour Renvoi</label>
+                                        <div class="relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-envelope text-gray-400"></i>
+                                            </div>
+                                            <input type="email" id="resendRecipientEmail" name="resendRecipientEmail"
+                                                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500
+                                                          focus:outline-none focus:ring-primary focus:border-primary sm:text-sm
+                                                          transition duration-150 ease-in-out"
+                                                   placeholder="saisir l'adresse email"
+                                                   value="admin@alertaml.com">
                                         </div>
+                                        <p class="mt-2 text-xs text-gray-500">Ex: support@votreentreprise.com</p>
                                     </div>
                                 </div>
                             </div>
@@ -496,9 +505,8 @@
         let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' };
         let currentEmailLogFilters = { page: 0, size: 5 };
 
-        // Variables pour gérer les timeouts des alertes d'échec API
         let apiAlertTimeout = null;
-        const API_FAILURE_ALERT_DELAY_MS = 1500; // Délai en ms avant d'afficher l'alerte d'échec API
+        const API_FAILURE_ALERT_DELAY_MS = 1500;
 
 
         // --- Fonctions d'affichage/masquage du loader ---
@@ -533,7 +541,6 @@
                 console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
             }
 
-            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API OU ERREUR HTTP ***
             console.log("Returning SIMULATED alerts data.");
             const allSimulatedAlerts = [
                 { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
@@ -812,20 +819,19 @@
 
             fetchAlerts(currentFilters)
                 .then(response => {
-                    clearTimeout(timerId); // Annule l'alerte si les données arrivent à temps
+                    clearTimeout(timerId);
                     renderAlertsTable(response.content);
                     updatePagination(response.pageable, response.totalElements);
-                    return fetchAlerts({ page: 0, size: 99999 }); // Pour les statistiques globales
+                    return fetchAlerts({ page: 0, size: 99999 });
                 })
                 .then(fullAlertsResponse => {
-                    clearTimeout(timerId); // Double sécurité
+                    clearTimeout(timerId);
                     updateSummaryCards(fullAlertsResponse.content);
                 })
                 .catch(error => {
-                    clearTimeout(timerId); // Annule l'alerte s'il y a une erreur attrapée avant le timer
+                    clearTimeout(timerId);
                     console.error('Erreur lors du chargement des alertes:', error);
                     console.warn("L'API réelle des alertes n'a pas pu être contactée. Affichage des données simulées.");
-                    // L'alerte sera déclenchée par le timer si la simulation est trop lente, ou pas du tout si elle est rapide
                 })
                 .finally(() => {
                     hideLoading();
@@ -1020,7 +1026,8 @@
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${log.id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.sentAt).toLocaleString()}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.recipientEmail}</td> <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.subject}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.recipientEmail}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.subject}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.status === 'SENT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                             ${log.status}
@@ -1084,12 +1091,12 @@
 
             fetchEmailLogs(currentEmailLogFilters)
                 .then(response => {
-                    clearTimeout(timerId); // Annule l'alerte si les données arrivent à temps
+                    clearTimeout(timerId);
                     renderEmailLogsTable(response.content);
                     updateEmailLogPagination(response.pageable, response.totalElements);
                 })
                 .catch(error => {
-                    clearTimeout(timerId); // Annule l'alerte s'il y a une erreur attrapée avant le timer
+                    clearTimeout(timerId);
                     console.error('Erreur lors du chargement des logs d\'e-mail:', error);
                     console.warn("L'API réelle des logs d'e-mail n'a pas pu être contactée. Affichage des données simulées.");
                 })
