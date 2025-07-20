@@ -128,6 +128,10 @@
                     </div>
                     <div>
                         <h2 class="text-xs uppercase font-semibold text-gray-500 mb-2">Settings</h2>
+                        <button id="triggerScanBtn" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1 w-full text-left">
+                            <i class="fas fa-sync-alt mr-3 text-gray-500"></i>
+                            Trigger Scan
+                        </button>
                         <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
                             <i class="fas fa-cog mr-3 text-gray-500"></i>
                             Configuration
@@ -411,7 +415,7 @@
                                             <p class="text-sm"><span class="font-medium text-gray-700">Date:</span> <span id="modalDate"></span></p>
                                             <p class="text-sm"><span class="font-medium text-gray-700">Client:</span> <span id="modalClientName"></span></p>
                                             <p class="text-sm"><span class="font-medium text-gray-700">Type:</span> <span id="modalType"></span></p>
-                                            <p class="text-sm"><span class="font-medium text-gray-700">Status:</span>
+                                            <p class="text-sm"><span class="font-medium text-gray-700">Status:</span> 
                                                 <span id="modalStatusBadge"></span>
                                             </p>
                                             <p class="text-sm"><span class="font-medium text-gray-700">Source:</span> <span id="modalSource"></span></p>
@@ -428,13 +432,13 @@
                                         </div>
                                     </div>
                                 </div>
-
+                                
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-800 mb-2">Alert History</h4>
                                     <div id="modalAlertHistory" class="space-y-3">
                                         </div>
                                 </div>
-
+                                
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-800 mb-2">Comments</h4>
                                     <div id="modalComments" class="space-y-3 mb-4">
@@ -493,6 +497,7 @@
         const API_BASE_URL = "https://alert-aml-admin.onrender.com";
 
         // Déclaration globale des variables de modale, de graphiques et de filtres
+        // Ces variables seront assignées plus tard une fois le DOM chargé.
         let modal = null;
         let closeModal = null;
         let cancelModal = null;
@@ -500,10 +505,13 @@
         let alertsByStatusChart = null;
         let saveChangesBtn = null;
         let resendEmailBtn = null;
+        // Déclaration du nouveau bouton de scan
+        let triggerScanBtn = null; 
 
-        let currentAlertId = null;
-        let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' };
-        let currentEmailLogFilters = { page: 0, size: 5 };
+        let currentAlertId = null; // Variable pour stocker l'ID de l'alerte actuellement ouverte dans la modale
+        let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' }; // Filtres pour les alertes. Taille de page ajustée pour voir la pagination.
+        let currentEmailLogFilters = { page: 0, size: 5 }; // Filtres pour les logs d'email. Taille de page ajustée.
+
 
         // --- Fonctions d'affichage/masquage du loader ---
         function showLoading() {
@@ -531,15 +539,19 @@
                     console.log("Fetch Alerts SUCCESS (API):", data);
                     return data; // Retourne les vraies données de l'API
                 } else {
-                    console.warn(`API Alerts non disponible ou erreur HTTP: ${response.status}. Tentative d'utilisation des données simulées.`);
-                    // PASSE À LA SIMULATION CI-DESSOUS
+                    console.warn(`API Alerts non disponible ou erreur HTTP: ${response.status}. Utilisation des données simulées.`);
+                    return simulateAlertsData(params); // Passe à la simulation
                 }
             } catch (networkError) {
-                console.error("Erreur réseau lors du fetch des alertes. Tentative d'utilisation des données simulées.", networkError);
-                // PASSE À LA SIMULATION CI-DESSOUS
+                console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
+                return simulateAlertsData(params); // Passe à la simulation
+            } finally {
+                // hideLoading() n'est plus ici, il est dans loadAlerts pour gérer la chaîne de promesses
             }
+        }
 
-            // *** DÉBUT DE LA SIMULATION DE DONNÉES EN CAS D'ÉCHEC API OU ERREUR HTTP ***
+        // Nouvelle fonction pour encapsuler la logique de simulation des alertes
+        function simulateAlertsData(params) {
             console.log("Returning SIMULATED alerts data.");
             const allSimulatedAlerts = [
                 { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
@@ -555,13 +567,13 @@
                 { id: 11, dateAlerte: new Date(2025, 6, 5, 14, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Global Innovations', typeAlerte: 'Other', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'Résolu après investigation', tiersIdClientDb: 'CLIENT011', commentairesTraitement: 'Résolue: Vrai positif confirmé' },
                 { id: 12, dateAlerte: new Date(2025, 6, 4, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Grace Hopper', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Pays non coopérant détecté', tiersIdClientDb: 'CLIENT012', commentairesTraitement: 'Première analyse' },
             ];
-
+    
             let filteredAlerts = allSimulatedAlerts.filter(alert => {
                 const statusMatch = params.status ? alert.statutAlerte === params.status : true;
                 const clientMatch = params.clientId ? alert.clientCabinetName === params.clientId : true;
                 return statusMatch && clientMatch;
             });
-
+    
             filteredAlerts.sort((a, b) => {
                 let comparison = 0;
                 if (params.sortBy === 'dateAlerte') {
@@ -573,13 +585,13 @@
                 }
                 return params.sortDir === 'desc' ? comparison * -1 : comparison;
             });
-
+    
             const totalElements = filteredAlerts.length;
             const totalPages = Math.ceil(totalElements / params.size);
             const startIndex = params.page * params.size;
             const endIndex = Math.min(startIndex + params.size, totalElements);
             const content = filteredAlerts.slice(startIndex, endIndex);
-
+    
             return new Promise(resolve => setTimeout(() => resolve({
                 content: content,
                 pageable: {
@@ -603,16 +615,21 @@
                 const response = await fetch(url);
                 if (!response.ok) {
                     console.warn(`API Alert Details non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
+                    return simulateAlertDetailsData(alertId);
                 } else {
                     const data = await response.json();
                     return data;
                 }
             } catch (networkError) {
                 console.error("Erreur réseau lors du fetch des détails de l'alerte. Utilisation des données simulées.", networkError);
+                return simulateAlertDetailsData(alertId);
             } finally {
                 hideLoading();
             }
+        }
 
+        // Fonction pour encapsuler la logique de simulation des détails d'alerte
+        function simulateAlertDetailsData(alertId) {
             console.log("Returning SIMULATED alert details for ID:", alertId);
             const simulatedDetail = {
                 id: alertId,
@@ -696,6 +713,18 @@
         }
 
         // --- Fonctions d'aide UI ---
+        function showLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) { loadingOverlay.classList.remove('hidden'); }
+            console.log("Loader: showLoading");
+        }
+
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) { loadingOverlay.classList.add('hidden'); }
+            console.log("Loader: hideLoading");
+        }
+
         function getStatusBadgeHtml(status) {
             let colorClass = 'bg-gray-100 text-gray-800';
             switch (status) {
@@ -812,12 +841,11 @@
 
         function loadAlerts() {
             showLoading();
-            // Supprime la gestion du timer et de l'alerte ici
             fetchAlerts(currentFilters)
                 .then(response => {
                     renderAlertsTable(response.content);
                     updatePagination(response.pageable, response.totalElements);
-                    return fetchAlerts({ page: 0, size: 99999 });
+                    return fetchAlerts({ page: 0, size: 99999 }); // Récupérer toutes les alertes pour les stats
                 })
                 .then(fullAlertsResponse => {
                     updateSummaryCards(fullAlertsResponse.content);
@@ -960,11 +988,18 @@
                     return data;
                 } else {
                     console.warn(`API Email Logs non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
+                    return simulateEmailLogsData(params);
                 }
             } catch (networkError) {
                 console.error("Erreur réseau lors du fetch des logs d'email. Utilisation des données simulées.", networkError);
+                return simulateEmailLogsData(params);
+            } finally {
+                // hideLoading() est dans loadEmailLogs pour gérer la chaîne de promesses
             }
+        }
 
+        // Fonction pour encapsuler la logique de simulation des logs d'e-mail
+        function simulateEmailLogsData(params) {
             console.log("Returning SIMULATED email logs data.");
             const allSimulatedLogs = [
                 { id: 1, recipientEmail: 'user1@example.com', subject: 'Alert: High Risk Transaction', sentAt: new Date(2025, 6, 18, 10, 0).toISOString(), status: 'SENT', errorMessage: null },
@@ -1092,17 +1127,51 @@
                 });
         }
 
+        // Nouvelle fonction pour déclencher le scan
+        async function triggerScan() {
+            showLoading();
+            try {
+                // Remplacez '/api/admin/trigger-scan' par l'endpoint réel de votre backend
+                const url = `${API_BASE_URL}/api/admin/trigger-scan`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const message = await response.text(); // Ou response.json() si votre backend renvoie du JSON
+                    alert(`Scan déclenché avec succès : ${message}`);
+                    console.log("Scan triggered successfully:", message);
+                    loadAlerts(); // Recharger les alertes après le scan pour voir les nouvelles
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur lors du déclenchement du scan: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                console.error("Impossible de déclencher le scan:", error);
+                alert('Erreur: Le scan n\'a pas pu être déclenché. Vérifiez la console.');
+            } finally {
+                hideLoading();
+            }
+        }
 
         // --- Gestion des sections de contenu ---
         function showSection(sectionId) {
+            // Masquer toutes les sections
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
+
+            // Afficher la section cible
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
             }
 
+
+            // Mettre à jour le titre principal
             const mainContentTitle = document.getElementById('mainContentTitle');
             if (mainContentTitle) {
                 if (sectionId === 'dashboardSection') {
@@ -1114,6 +1183,7 @@
                 }
             }
 
+            // Mettre à jour l'état actif dans la sidebar
             document.querySelectorAll('nav a').forEach(link => {
                 link.classList.remove('bg-blue-50', 'text-primary');
                 link.classList.add('text-gray-700', 'hover:bg-gray-100');
@@ -1125,22 +1195,27 @@
                 activeLink.classList.add('bg-blue-50', 'text-primary');
             }
 
+            // Recharger les données spécifiques à la section si nécessaire
             if (sectionId === 'alertsSection') {
-                loadAlerts();
+                loadAlerts(); // Recharger les alertes lorsque la section Alertes est affichée
             } else if (sectionId === 'emailLogsSection') {
-                loadEmailLogs();
-            } else if (sectionId === 'dashboardSection') {
-                 loadAlerts();
+                loadEmailLogs(); // Recharger les logs d'e-mail lorsque la section Email Logs est affichée
+            } else if (sectionId === 'dashboardSection') { // NOUVEAU: Charger les données du dashboard au début
+                 loadAlerts(); // Le dashboard utilise aussi les données d'alertes pour les cartes et graphiques
             }
         }
 
         // --- Initialisation des écouteurs d'événements UI ---
         function initializeUIEventListeners() {
+            // Assigner les éléments DOM aux variables globales après que le DOM soit chargé
             modal = document.getElementById('alertModal');
             closeModal = document.getElementById('closeModal');
             cancelModal = document.getElementById('cancelModal');
             saveChangesBtn = document.getElementById('saveChangesBtn');
             resendEmailBtn = document.getElementById('resendEmailBtn');
+            // Assignation du nouveau bouton de scan
+            triggerScanBtn = document.getElementById('triggerScanBtn');
+
 
             const sidebarToggle = document.getElementById('sidebarToggle');
             if (sidebarToggle) {
@@ -1221,10 +1296,10 @@
                     }
 
                     try {
-                        const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText);
+                        const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
                         alert('Alerte mise à jour avec succès !');
                         if (modal) modal.classList.add('hidden');
-                        loadAlerts();
+                        loadAlerts(); // Reload table to reflect changes
                     } catch (error) {
                         alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
                         console.error(error);
@@ -1241,7 +1316,7 @@
                     }
 
                     try {
-                        const responseText = await resendAlertEmail(currentAlertId);
+                        const responseText = await resendAlertEmail(currentAlertId); // APPEL API RÉEL
                         alert('E-mail de renvoi : ' + responseText);
                     } catch (error) {
                         alert('Erreur lors du renvoi de l\'e-mail : ' + error.message);
@@ -1249,6 +1324,7 @@
                     }
                 });
             } else { console.error("Element #resendEmailBtn not found."); }
+
 
             if (closeModal) {
                 closeModal.addEventListener('click', function() {
@@ -1310,6 +1386,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeCharts();
             initializeUIEventListeners();
+
+            // Écouteur pour le nouveau bouton de scan
+            if (triggerScanBtn) {
+                triggerScanBtn.addEventListener('click', triggerScan);
+            } else {
+                console.error("Element #triggerScanBtn not found.");
+            }
 
             document.getElementById('dashboardLink').addEventListener('click', (e) => {
                 e.preventDefault();
