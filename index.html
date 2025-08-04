@@ -501,12 +501,11 @@
         let modal = null;
         let closeModal = null;
         let cancelModal = null;
-        let alertsByTypeChart = null;
-        let alertsByStatusChart = null;
+        let alertsByTypeChart = null; // Déclaration unique
+        let alertsByStatusChart = null; // Déclaration unique
         let saveChangesBtn = null;
         let resendEmailBtn = null;
-        // Déclaration du nouveau bouton de scan
-        let triggerScanBtn = null; 
+        let triggerScanBtn = null; // Déclaration unique pour le bouton de scan
 
         let currentAlertId = null; // Variable pour stocker l'ID de l'alerte actuellement ouverte dans la modale
         let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' }; // Filtres pour les alertes. Taille de page ajustée pour voir la pagination.
@@ -546,7 +545,7 @@
                 console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
                 return simulateAlertsData(params); // Passe à la simulation
             } finally {
-                // hideLoading() n'est plus ici, il est dans loadAlerts pour gérer la chaîne de promesses
+                // hideLoading() est dans loadAlerts pour gérer la chaîne de promesses
             }
         }
 
@@ -845,7 +844,7 @@
                 .then(response => {
                     renderAlertsTable(response.content);
                     updatePagination(response.pageable, response.totalElements);
-                    return fetchAlerts({ page: 0, size: 99999 }); // Récupérer toutes les alertes pour les stats
+                    return fetchAlerts({ page: 0, size: 99999 }); // Pour les statistiques globales
                 })
                 .then(fullAlertsResponse => {
                     updateSummaryCards(fullAlertsResponse.content);
@@ -1133,6 +1132,8 @@
             try {
                 // Remplacez '/api/admin/trigger-scan' par l'endpoint réel de votre backend
                 const url = `${API_BASE_URL}/api/admin/trigger-scan`;
+                console.log(`Attempting to trigger scan at: ${url}`); // Ajout d'un log
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -1151,7 +1152,7 @@
                 }
             } catch (error) {
                 console.error("Impossible de déclencher le scan:", error);
-                alert('Erreur: Le scan n\'a pas pu être déclenché. Vérifiez la console.');
+                alert('Erreur: Le scan n\'a pas pu être déclenché. Vérifiez la console pour plus de détails.');
             } finally {
                 hideLoading();
             }
@@ -1214,7 +1215,7 @@
             saveChangesBtn = document.getElementById('saveChangesBtn');
             resendEmailBtn = document.getElementById('resendEmailBtn');
             // Assignation du nouveau bouton de scan
-            triggerScanBtn = document.getElementById('triggerScanBtn');
+            triggerScanBtn = document.getElementById('triggerScanBtn'); // Assigner ici
 
 
             const sidebarToggle = document.getElementById('sidebarToggle');
@@ -1388,10 +1389,10 @@
             initializeUIEventListeners();
 
             // Écouteur pour le nouveau bouton de scan
-            if (triggerScanBtn) {
+            if (triggerScanBtn) { // Vérifier si le bouton a été assigné
                 triggerScanBtn.addEventListener('click', triggerScan);
             } else {
-                console.error("Element #triggerScanBtn not found.");
+                console.error("Element #triggerScanBtn not found during DOMContentLoaded.");
             }
 
             document.getElementById('dashboardLink').addEventListener('click', (e) => {
