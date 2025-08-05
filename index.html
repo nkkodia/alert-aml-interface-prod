@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AML Alert Dashboard</title>
+    <!-- Favicon -->
     <link rel="icon" href="https://placehold.co/32x32/1e40af/ffffff?text=AML" type="image/png">
+    <!-- Fin Favicon -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -85,12 +87,14 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
+    <!-- Overlay de chargement -->
     <div id="loadingOverlay">
         <div class="spinner"></div>
         <p class="ml-3 text-lg text-primary">Chargement...</p>
     </div>
 
     <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
         <div class="sidebar bg-white w-64 border-r border-gray-200 flex flex-col">
             <div class="p-4 border-b border-gray-200">
                 <h1 class="text-xl font-bold text-primary flex items-center">
@@ -128,10 +132,6 @@
                     </div>
                     <div>
                         <h2 class="text-xs uppercase font-semibold text-gray-500 mb-2">Settings</h2>
-                        <button id="triggerScanBtn" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1 w-full text-left">
-                            <i class="fas fa-sync-alt mr-3 text-gray-500"></i>
-                            Trigger Scan
-                        </button>
                         <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100">
                             <i class="fas fa-cog mr-3 text-gray-500"></i>
                             Configuration
@@ -140,6 +140,10 @@
                             <i class="fas fa-users mr-3 text-gray-500"></i>
                             Users
                         </a>
+                        <button id="triggerScanBtn" class="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 mt-1 w-full text-left">
+                            <i class="fas fa-sync-alt mr-3 text-gray-500"></i>
+                            Trigger Scan
+                        </button>
                     </div>
                 </div>
             </nav>
@@ -154,7 +158,9 @@
             </div>
         </div>
 
+        <!-- Main content -->
         <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top navigation -->
             <header class="bg-white border-b border-gray-200 flex items-center justify-between p-4">
                 <div class="flex items-center">
                     <button id="sidebarToggle" class="md:hidden mr-4 text-gray-500">
@@ -175,8 +181,11 @@
                 </div>
             </header>
 
+            <!-- Main content area -->
             <main class="flex-1 overflow-y-auto p-4">
-                <section id="dashboardSection" class="content-section active">
+                <!-- Dashboard Section -->
+                <section id="dashboardSection" class="content-section">
+                    <!-- Summary cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div class="bg-white rounded-lg shadow p-4">
                             <div class="flex items-center justify-between">
@@ -228,6 +237,7 @@
                         </div>
                     </div>
 
+                    <!-- Charts -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                         <div class="bg-white rounded-lg shadow p-4">
                             <div class="flex items-center justify-between mb-4">
@@ -258,7 +268,9 @@
                     </div>
                 </section>
 
-                <section id="alertsSection" class="content-section">
+                <!-- Alerts Section -->
+                <section id="alertsSection" class="content-section active">
+                    <!-- Recent alerts -->
                     <div class="bg-white rounded-lg shadow overflow-hidden">
                         <div class="p-4 border-b border-gray-200 flex items-center justify-between">
                             <h3 class="font-medium text-gray-800">Recent Alerts</h3>
@@ -295,7 +307,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="alertsTableBody" class="bg-white divide-y divide-gray-200">
-                                        </tbody>
+                                    <!-- Alert rows will be injected here -->
+                                </tbody>
                             </table>
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
@@ -319,8 +332,7 @@
                                             <span class="sr-only">Previous</span>
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
-                                        <div id="pageNumbers" class="flex">
-                                            </div>
+                                        <!-- Page numbers will be generated here -->
                                         <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                             <span class="sr-only">Next</span>
                                             <i class="fas fa-chevron-right"></i>
@@ -332,6 +344,7 @@
                     </div>
                 </section>
 
+                <!-- Email Logs Section -->
                 <section id="emailLogsSection" class="content-section">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Email Sending Logs</h2>
                     <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -348,7 +361,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="emailLogsTableBody" class="bg-white divide-y divide-gray-200">
-                                        </tbody>
+                                    <!-- Email log rows will be injected here -->
+                                </tbody>
                             </table>
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
@@ -372,8 +386,7 @@
                                             <span class="sr-only">Previous</span>
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
-                                        <div id="emailLogPageNumbers" class="flex">
-                                            </div>
+                                        <!-- Page numbers will be generated here -->
                                         <button id="nextEmailLogPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                             <span class="sr-only">Next</span>
                                             <i class="fas fa-chevron-right"></i>
@@ -389,6 +402,7 @@
         </div>
     </div>
 
+    <!-- Alert Detail Modal (hidden by default) -->
     <div id="alertModal" class="fixed inset-0 overflow-y-auto hidden z-50">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -436,33 +450,35 @@
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-800 mb-2">Alert History</h4>
                                     <div id="modalAlertHistory" class="space-y-3">
-                                        </div>
+                                        <!-- History items will be injected here -->
+                                    </div>
                                 </div>
                                 
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-800 mb-2">Comments</h4>
                                     <div id="modalComments" class="space-y-3 mb-4">
-                                        </div>
+                                        <!-- Comments will be injected here -->
+                                    </div>
                                     <div>
                                         <label for="newComment" class="block text-sm font-medium text-gray-700">Add Comment</label>
                                         <div class="mt-1">
                                             <textarea id="newComment" name="newComment" rows="3" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
                                         </div>
-                                    </div>
-                                    <div class="mt-4">
-                                        <label for="resendRecipientEmail" class="block text-sm font-medium text-gray-700 mb-1">Email du Destinataire pour Renvoi</label>
-                                        <div class="relative rounded-md shadow-sm">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <i class="fas fa-envelope text-gray-400"></i>
+                                        <div class="mt-4">
+                                            <label for="resendRecipientEmail" class="block text-sm font-medium text-gray-700 mb-1">Email du Destinataire pour Renvoi</label>
+                                            <div class="relative rounded-md shadow-sm">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <i class="fas fa-envelope text-gray-400"></i>
+                                                </div>
+                                                <input type="email" id="resendRecipientEmail" name="resendRecipientEmail"
+                                                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500
+                                                                focus:outline-none focus:ring-primary focus:border-primary sm:text-sm
+                                                                transition duration-150 ease-in-out"
+                                                        placeholder="saisir l'adresse email"
+                                                        value="admin@alertaml.com">
                                             </div>
-                                            <input type="email" id="resendRecipientEmail" name="resendRecipientEmail"
-                                                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500
-                                                          focus:outline-none focus:ring-primary focus:border-primary sm:text-sm
-                                                          transition duration-150 ease-in-out"
-                                                   placeholder="saisir l'adresse email"
-                                                   value="admin@alertaml.com">
+                                            <p class="mt-2 text-xs text-gray-500">Ex: support@votreentreprise.com</p>
                                         </div>
-                                        <p class="mt-2 text-xs text-gray-500">Ex: support@votreentreprise.com</p>
                                     </div>
                                 </div>
                             </div>
@@ -494,22 +510,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // REMPLACER PAR L'URL RÉELLE DE VOTRE BACKEND RENDER
-        const API_BASE_URL = "https://alert-aml-admin.onrender.com";
+        const API_BASE_URL = "https://alert-aml-admin.onrender.com"; 
 
         // Déclaration globale des variables de modale, de graphiques et de filtres
-        // Ces variables seront assignées plus tard une fois le DOM chargé.
-        let modal = null;
-        let closeModal = null;
-        let cancelModal = null;
-        let alertsByTypeChart = null; // Déclaration unique
-        let alertsByStatusChart = null; // Déclaration unique
-        let saveChangesBtn = null;
-        let resendEmailBtn = null;
-        let triggerScanBtn = null; // Déclaration unique pour le bouton de scan
-
-        let currentAlertId = null; // Variable pour stocker l'ID de l'alerte actuellement ouverte dans la modale
-        let currentFilters = { page: 0, size: 5, sortBy: 'dateAlerte', sortDir: 'desc' }; // Filtres pour les alertes. Taille de page ajustée pour voir la pagination.
-        let currentEmailLogFilters = { page: 0, size: 5 }; // Filtres pour les logs d'email. Taille de page ajustée.
+        let modal, closeModal, cancelModal;
+        let alertsByTypeChart, alertsByStatusChart;
+        let currentPage = 0;
+        let totalPages = 1;
 
 
         // --- Fonctions d'affichage/masquage du loader ---
@@ -536,88 +543,30 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log("Fetch Alerts SUCCESS (API):", data);
-                    return data; // Retourne les vraies données de l'API
+                    return data;
                 } else {
                     console.warn(`API Alerts non disponible ou erreur HTTP: ${response.status}. Utilisation des données simulées.`);
-                    return simulateAlertsData(params); // Passe à la simulation
+                    return simulateAlertsData(params);
                 }
             } catch (networkError) {
                 console.error("Erreur réseau lors du fetch des alertes. Utilisation des données simulées.", networkError);
-                return simulateAlertsData(params); // Passe à la simulation
+                return simulateAlertsData(params);
             } finally {
                 // hideLoading() est dans loadAlerts pour gérer la chaîne de promesses
             }
         }
-
-        // Nouvelle fonction pour encapsuler la logique de simulation des alertes
-        function simulateAlertsData(params) {
-            console.log("Returning SIMULATED alerts data.");
-            const allSimulatedAlerts = [
-                { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
-                { id: 2, dateAlerte: new Date(2025, 6, 14, 14, 30).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Tech Solutions Inc.', typeAlerte: 'PEP', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Partie exposée politiquement', tiersIdClientDb: 'CLIENT002', commentairesTraitement: 'En attente de documents' },
-                { id: 3, dateAlerte: new Date(2025, 6, 13, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Alice Wonderland', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'Transaction avec pays du tiers (Wonderland)', tiersIdClientDb: 'CLIENT003', commentairesTraitement: 'Faux positif confirmé' },
-                { id: 4, dateAlerte: new Date(2025, 6, 12, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Bob Builder', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Vérification de sanctions', tiersIdClientDb: 'CLIENT004', commentairesTraitement: 'Nouvelle alerte' },
-                { id: 5, dateAlerte: new Date(2025, 6, 11, 16, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'DataCorp Ltd.', typeAlerte: 'PEP', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'PEP avérée', tiersIdClientDb: 'CLIENT005', commentairesTraitement: 'Résolue: Vrai positif' },
-                { id: 6, dateAlerte: new Date(2025, 6, 10, 8, 45).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Charlie Chaplin', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction avec pays du tiers (Sillyville)', tiersIdClientDb: 'CLIENT006', commentairesTraitement: 'En attente d\'analyse' },
-                { id: 7, dateAlerte: new Date(2025, 6, 9, 13, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Diana Prince', typeAlerte: 'Sanction', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Alerte pour suspicion de blanchiment', tiersIdClientDb: 'CLIENT007', commentairesTraitement: 'Investigation en cours' },
-                { id: 8, dateAlerte: new Date(2025, 6, 8, 10, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'CodeMasters', typeAlerte: 'Other', statutAlerte: 'Ouverte', descriptionAlerte: 'Activité inhabituelle', tiersIdClientDb: 'CLIENT008', commentairesTraitement: 'Signalement client' },
-                { id: 9, dateAlerte: new Date(2025, 6, 7, 17, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Eve Harrington', typeAlerte: 'PEP', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'False positive PEP match', tiersIdClientDb: 'CLIENT009', commentairesTraitement: 'Analyse manuelle: faux positif' },
-                { id: 10, dateAlerte: new Date(2025, 6, 6, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Frank Castle', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Sanction list match', tiersIdClientDb: 'CLIENT010', commentairesTraitement: 'Vérification en attente' },
-                { id: 11, dateAlerte: new Date(2025, 6, 5, 14, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Global Innovations', typeAlerte: 'Other', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'Résolu après investigation', tiersIdClientDb: 'CLIENT011', commentairesTraitement: 'Résolue: Vrai positif confirmé' },
-                { id: 12, dateAlerte: new Date(2025, 6, 4, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Grace Hopper', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Pays non coopérant détecté', tiersIdClientDb: 'CLIENT012', commentairesTraitement: 'Première analyse' },
-            ];
-    
-            let filteredAlerts = allSimulatedAlerts.filter(alert => {
-                const statusMatch = params.status ? alert.statutAlerte === params.status : true;
-                const clientMatch = params.clientId ? alert.clientCabinetName === params.clientId : true;
-                return statusMatch && clientMatch;
-            });
-    
-            filteredAlerts.sort((a, b) => {
-                let comparison = 0;
-                if (params.sortBy === 'dateAlerte') {
-                    const dateA = new Date(a.dateAlerte).getTime();
-                    const dateB = new Date(b.dateAlerte).getTime();
-                    comparison = dateA - dateB;
-                } else if (params.sortBy === 'clientCabinetName') {
-                    comparison = a.clientCabinetName.localeCompare(b.clientCabinetName);
-                }
-                return params.sortDir === 'desc' ? comparison * -1 : comparison;
-            });
-    
-            const totalElements = filteredAlerts.length;
-            const totalPages = Math.ceil(totalElements / params.size);
-            const startIndex = params.page * params.size;
-            const endIndex = Math.min(startIndex + params.size, totalElements);
-            const content = filteredAlerts.slice(startIndex, endIndex);
-    
-            return new Promise(resolve => setTimeout(() => resolve({
-                content: content,
-                pageable: {
-                    pageNumber: params.page,
-                    pageSize: params.size,
-                    totalElements: totalElements,
-                    totalPages: totalPages,
-                    last: params.page >= totalPages - 1,
-                    numberOfElements: content.length
-                },
-                totalElements: totalElements,
-                totalPages: totalPages,
-                last: params.page >= totalPages - 1
-            }), 300));
-        }
-
+        
         async function fetchAlertDetails(alertId) {
             showLoading();
             const url = `${API_BASE_URL}/api/alerts/${alertId}`;
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    console.warn(`API Alert Details non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
-                    return simulateAlertDetailsData(alertId);
-                } else {
+                if (response.ok) {
                     const data = await response.json();
                     return data;
+                } else {
+                    console.warn(`API Alert Details non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
+                    return simulateAlertDetailsData(alertId);
                 }
             } catch (networkError) {
                 console.error("Erreur réseau lors du fetch des détails de l'alerte. Utilisation des données simulées.", networkError);
@@ -625,24 +574,6 @@
             } finally {
                 hideLoading();
             }
-        }
-
-        // Fonction pour encapsuler la logique de simulation des détails d'alerte
-        function simulateAlertDetailsData(alertId) {
-            console.log("Returning SIMULATED alert details for ID:", alertId);
-            const simulatedDetail = {
-                id: alertId,
-                dateAlerte: new Date().toISOString(),
-                clientCabinetName: 'Client Simulé',
-                typeAlerte: 'Sanction',
-                statutAlerte: 'Ouverte',
-                descriptionAlerte: `Ceci est une description simulée pour l'alerte ${alertId}.`,
-                nomTiers: 'Nom Simulé',
-                denominationSocialeTiers: null,
-                tiersIdClientDb: `SIMU-${alertId}`,
-                commentairesTraitement: `Commentaire simulé 1.\nCommentaire simulé 2.`
-            };
-            return new Promise(resolve => setTimeout(() => resolve(simulatedDetail), 300));
         }
 
         async function updateAlertStatus(alertId, newStatus, comments) {
@@ -658,9 +589,7 @@
                     const errorData = await response.json();
                     throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
                 }
-                const data = await response.json();
-                console.log(`Statut de l'alerte ${alertId} mis à jour :`, data);
-                return data;
+                return await response.json();
             } catch (error) {
                 console.error(`Erreur lors de la mise à jour du statut de l'alerte ${alertId}:`, error);
                 throw error;
@@ -668,31 +597,15 @@
                 hideLoading();
             }
         }
-
-        async function resendAlertEmail(alertId) {
+        
+        async function resendAlertEmail(alertId, recipientEmail) {
             showLoading();
             const url = `${API_BASE_URL}/api/alerts/${alertId}/resend-email`;
-
-            const recipientEmailInput = document.getElementById('resendRecipientEmail');
-            if (!recipientEmailInput) {
-                alert('Erreur: Le champ "Recipient Email for Resend" n\'a pas été trouvé dans la modale.');
-                hideLoading();
-                throw new Error('Recipient email input field not found.');
-            }
-            const recipientEmail = recipientEmailInput.value;
-
-            if (!recipientEmail) {
-                alert('Veuillez entrer une adresse e-mail de destinataire.');
-                hideLoading();
-                throw new Error('Recipient email is empty.');
-            }
-
+            
             try {
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ recipientEmail: recipientEmail })
                 });
 
@@ -711,707 +624,98 @@
             }
         }
 
-        // --- Fonctions d'aide UI ---
-        function showLoading() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) { loadingOverlay.classList.remove('hidden'); }
-            console.log("Loader: showLoading");
+        async function triggerScan() {
+             showLoading();
+             const url = `${API_BASE_URL}/api/admin/trigger-scan`;
+             try {
+                 const response = await fetch(url, { method: 'POST' });
+                 if (response.ok) {
+                     const message = await response.text();
+                     alert(`Scan déclenché avec succès : ${message}`);
+                 } else {
+                     const errorText = await response.text();
+                     throw new Error(`Erreur lors du déclenchement du scan: ${response.status} - ${errorText}`);
+                 }
+             } catch (error) {
+                 console.error("Impossible de déclencher le scan:", error);
+                 alert('Erreur: Le scan n\'a pas pu être déclenché. Vérifiez la console pour plus de détails.');
+             } finally {
+                 hideLoading();
+             }
         }
-
-        function hideLoading() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) { loadingOverlay.classList.add('hidden'); }
-            console.log("Loader: hideLoading");
-        }
-
-        function getStatusBadgeHtml(status) {
-            let colorClass = 'bg-gray-100 text-gray-800';
-            switch (status) {
-                case 'Ouverte': colorClass = 'bg-yellow-100 text-yellow-800'; break;
-                case 'En cours de traitement': colorClass = 'bg-blue-100 text-blue-800'; break;
-                case 'Fermée - Vrai positif': colorClass = 'bg-green-100 text-green-800'; break;
-                case 'Fermée - Faux positif': colorClass = 'bg-gray-100 text-gray-800'; break;
-                case 'Sanction': colorClass = 'bg-red-100 text-red-800'; break;
-                case 'PEP': colorClass = 'bg-purple-100 text-purple-800'; break;
-                case 'PaysNonCooperant': colorClass = 'bg-orange-100 text-orange-800'; break;
-                case 'Fermée - Résolu': colorClass = 'bg-green-100 text-green-800'; break;
-            }
-            return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}">${status}</span>`;
-        }
-
-        function renderAlertsTable(alertsContent) {
-            const tableBody = document.getElementById('alertsTableBody');
-            if (!tableBody) { console.error("Element #alertsTableBody not found."); return; }
-            tableBody.innerHTML = '';
-
-            if (alertsContent.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Aucune alerte trouvée.</td></tr>`;
-                return;
-            }
-
-            alertsContent.forEach(alert => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${alert.id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(alert.dateAlerte).toLocaleString()}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${alert.clientCabinetName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${alert.nomTiers || alert.denominationSocialeTiers || 'N/A'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getStatusBadgeHtml(alert.typeAlerte)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getStatusBadgeHtml(alert.statutAlerte)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button class="text-primary hover:text-secondary mr-2 view-alert-btn" data-alert-id="${alert.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="text-green-600 hover:text-green-800 edit-alert-btn" data-alert-id="${alert.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            document.querySelectorAll('.view-alert-btn').forEach(button => {
-                button.addEventListener('click', (e) => openAlertModal(parseInt(e.currentTarget.dataset.alertId)));
-            });
-            document.querySelectorAll('.edit-alert-btn').forEach(button => {
-                button.addEventListener('click', (e) => openAlertModal(parseInt(e.currentTarget.dataset.alertId)));
-            });
-        }
-
-        function updatePagination(pageable, totalElements) {
-            const currentPageStart = document.getElementById('currentPageStart');
-            const currentPageEnd = document.getElementById('currentPageEnd');
-            const totalResults = document.getElementById('totalResults');
-            const prevPageBtn = document.getElementById('prevPage');
-            const nextPageBtn = document.getElementById('nextPage');
-            const prevPageMobileBtn = document.getElementById('prevPageMobile');
-            const nextPageMobileBtn = document.getElementById('nextPageMobile');
-            const pageNumbersContainer = document.getElementById('pageNumbers');
-
-            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : (pageable.pageNumber * pageable.pageSize) + 1;
-            if (currentPageEnd) currentPageEnd.textContent = totalElements === 0 ? 0 : Math.min(((pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements), totalElements);
-            if (totalResults) totalResults.textContent = totalElements;
-
-            if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
-            if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
-            if (nextPageBtn) nextPageBtn.disabled = pageable.last;
-            if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
-
-            const paginationControls = document.querySelector('#alertsSection .px-4.py-3.bg-gray-50');
-            if (paginationControls) {
-                if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) {
-                    paginationControls.classList.add('hidden');
-                } else {
-                    paginationControls.classList.remove('hidden');
-                }
-            }
-
-            if (pageNumbersContainer) {
-                pageNumbersContainer.innerHTML = '';
-                const totalPages = pageable.totalPages;
-                for (let i = 0; i < totalPages; i++) {
-                    const pageButton = document.createElement('button');
-                    pageButton.textContent = i + 1;
-                    pageButton.className = `relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${i === pageable.pageNumber ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
-                    pageButton.addEventListener('click', () => {
-                        currentFilters.page = i;
-                        loadAlerts();
-                    });
-                    pageNumbersContainer.appendChild(pageButton);
-                }
-            }
-        }
-
-        function updateSummaryCards(alerts) {
-            document.getElementById('totalAlerts').textContent = alerts.length;
-            document.getElementById('openAlerts').textContent = alerts.filter(a => a.statutAlerte === 'Ouverte').length;
-            document.getElementById('falsePositives').textContent = alerts.filter(a => a.statutAlerte === 'Fermée - Faux positif').length;
-
-            const resolvedAlerts = alerts.filter(a => a.statutAlerte.startsWith('Fermée'));
-            if (resolvedAlerts.length > 0) {
-                document.getElementById('avgResolutionTime').textContent = (Math.random() * 5 + 1).toFixed(1);
-            } else {
-                document.getElementById('avgResolutionTime').textContent = 'N/A';
-            }
-
-            updateCharts(alerts);
-        }
-
-        function loadAlerts() {
-            showLoading();
-            fetchAlerts(currentFilters)
-                .then(response => {
-                    renderAlertsTable(response.content);
-                    updatePagination(response.pageable, response.totalElements);
-                    return fetchAlerts({ page: 0, size: 99999 }); // Pour les statistiques globales
-                })
-                .then(fullAlertsResponse => {
-                    updateSummaryCards(fullAlertsResponse.content);
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement des alertes:', error);
-                    console.warn("L'API réelle des alertes n'a pas pu être contactée. Affichage des données simulées.");
-                })
-                .finally(() => {
-                    hideLoading();
-                });
-        }
-
-        function initializeCharts() {
-            const alertsByTypeCtx = document.getElementById('alertsByTypeChart');
-            if (alertsByTypeCtx) {
-                alertsByTypeChart = new Chart(alertsByTypeCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: [],
-                        datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'right' } }
-                    }
-                });
-            } else { console.error("Element #alertsByTypeChart not found."); }
-
-            const alertsByStatusCtx = document.getElementById('alertsByStatusChart');
-            if (alertsByStatusCtx) {
-                alertsByStatusChart = new Chart(alertsByStatusCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: [],
-                        datasets: [{ label: 'Alerts', data: [], backgroundColor: [], borderWidth: 0 }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            } else { console.error("Element #alertsByStatusChart not found."); }
-        }
-
-        async function openAlertModal(alertId) {
-            showLoading();
-            try {
-                const alertDetails = await fetchAlertDetails(alertId);
-                currentAlertId = alertId;
-
-                document.getElementById('modalAlertId').textContent = alertDetails.id;
-                document.getElementById('modalDate').textContent = new Date(alertDetails.dateAlerte).toLocaleString();
-                document.getElementById('modalClientName').textContent = alertDetails.clientCabinetName;
-                document.getElementById('modalType').textContent = alertDetails.typeAlerte;
-                document.getElementById('modalStatusBadge').innerHTML = getStatusBadgeHtml(alertDetails.statutAlerte);
-                document.getElementById('modalSource').textContent = alertDetails.descriptionAlerte;
-
-                document.getElementById('modalCounterpartyName').textContent = alertDetails.nomTiers || alertDetails.denominationSocialeTiers || 'N/A';
-                let country = 'N/A';
-                if (alertDetails.typeAlerte === 'PaysNonCooperant' && alertDetails.descriptionAlerte) {
-                    const match = alertDetails.descriptionAlerte.match(/pays du tiers \((.*?)\)/);
-                    if (match && match[1]) {
-                        country = match[1];
-                    }
-                }
-                document.getElementById('modalCountry').textContent = country;
-                document.getElementById('modalCounterpartyType').textContent = 'N/A';
-                document.getElementById('modalMatchReason').textContent = alertDetails.descriptionAlerte;
-                document.getElementById('modalReference').textContent = alertDetails.tiersIdClientDb;
-
-                const modalAlertHistory = document.getElementById('modalAlertHistory');
-                modalAlertHistory.innerHTML = `
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 pt-1"><div class="h-2 w-2 rounded-full bg-gray-400"></div></div>
-                        <div class="ml-3">
-                            <p class="text-sm text-gray-700">Alert created by system</p>
-                            <p class="text-xs text-gray-500">${new Date(alertDetails.dateAlerte).toLocaleString()} by AML System</p>
-                        </div>
-                    </div>
-                `;
-                if (alertDetails.commentairesTraitement) {
-                    const commentsHtml = alertDetails.commentairesTraitement.split('\n').map(comment => `
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 pt-1"><div class="h-2 w-2 rounded-full bg-blue-400"></div></div>
-                            <div class="ml-3">
-                                <p class="text-sm text-gray-700">${comment}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                    modalAlertHistory.innerHTML += commentsHtml;
-                } else {
-                    modalAlertHistory.innerHTML += `<p class="text-sm text-gray-500 mt-2">Aucun historique de statut.</p>`;
-                }
-
-                const modalComments = document.getElementById('modalComments');
-                modalComments.innerHTML = alertDetails.commentairesTraitement ? `
-                    <div class="bg-gray-50 p-3 rounded">
-                        <div class="flex justify-between">
-                            <p class="text-sm font-medium">Historique des commentaires</p>
-                            <p class="text-xs text-gray-500">${new Date(alertDetails.dateAlerte).toLocaleString()}</p>
-                        </div>
-                        <p class="text-sm mt-1">${alertDetails.commentairesTraitement}</p>
-                    </div>
-                ` : '<p class="text-sm text-gray-500">Aucun commentaire.</p>';
-
-
-                document.getElementById('newComment').value = '';
-                document.getElementById('changeStatusSelect').value = alertDetails.statutAlerte;
-
-                const resendRecipientEmailInput = document.getElementById('resendRecipientEmail');
-                if (resendRecipientEmailInput) {
-                    resendRecipientEmailInput.value = 'admin@alertaml.com';
-                }
-
-                if (modal) {
-                    modal.classList.remove('hidden');
-                } else {
-                    console.error("Modal element is not initialized.");
-                }
-            } catch (error) {
-                alert('Erreur lors du chargement de l\'alerte: ' + error.message);
-                console.error(error);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // --- Logique Email Logs ---
-        async function fetchEmailLogs(params) {
-            showLoading();
-            const queryParams = new URLSearchParams(params).toString();
-            const url = `${API_BASE_URL}/api/email-logs?${queryParams}`;
-
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("Fetch Email Logs SUCCESS (API):", data);
-                    return data;
-                } else {
-                    console.warn(`API Email Logs non disponible ou erreur: ${response.status}. Utilisation des données simulées.`);
-                    return simulateEmailLogsData(params);
-                }
-            } catch (networkError) {
-                console.error("Erreur réseau lors du fetch des logs d'email. Utilisation des données simulées.", networkError);
-                return simulateEmailLogsData(params);
-            } finally {
-                // hideLoading() est dans loadEmailLogs pour gérer la chaîne de promesses
-            }
-        }
-
-        // Fonction pour encapsuler la logique de simulation des logs d'e-mail
-        function simulateEmailLogsData(params) {
-            console.log("Returning SIMULATED email logs data.");
-            const allSimulatedLogs = [
-                { id: 1, recipientEmail: 'user1@example.com', subject: 'Alert: High Risk Transaction', sentAt: new Date(2025, 6, 18, 10, 0).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 2, recipientEmail: 'user2@example.com', subject: 'Alert: PEP Match', sentAt: new Date(2025, 6, 17, 14, 30).toISOString(), status: 'FAILED', errorMessage: 'SMTP connection failed' },
-                { id: 3, recipientEmail: 'user3@example.com', subject: 'Alert: Non-Cooperating Country', sentAt: new Date(2025, 6, 16, 9, 0).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 4, recipientEmail: 'user4@example.com', subject: 'Alert: Large Transaction', sentAt: new Date(2025, 6, 15, 11, 0).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 5, recipientEmail: 'user5@example.com', subject: 'Alert: Suspicious Activity', sentAt: new Date(2025, 6, 14, 16, 0).toISOString(), status: 'FAILED', errorMessage: 'Network timeout' },
-                { id: 6, recipientEmail: 'user6@example.com', subject: 'Alert: Sanctioned Entity', sentAt: new Date(2025, 6, 13, 8, 45).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 7, recipientEmail: 'user7@example.com', subject: 'Alert: Compliance Breach', sentAt: new Date(2025, 6, 12, 13, 0).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 8, recipientEmail: 'user8@example.com', subject: 'Alert: Fraud Detection', sentAt: new Date(2025, 6, 11, 10, 0).toISOString(), status: 'FAILED', errorMessage: 'Recipient blocked' },
-                { id: 9, recipientEmail: 'user9@example.com', subject: 'Alert: Unusual Pattern', sentAt: new Date(2025, 6, 10, 17, 0).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 10, recipientEmail: 'user10@example.com', subject: 'Alert: High Value Transfer', sentAt: new Date(2025, 6, 9, 11, 0).toISOString(), status: 'SENT', errorMessage: null },
-                { id: 11, recipientEmail: 'user11@example.com', subject: 'Alert: Regulatory Change', sentAt: new Date(2025, 6, 8, 14, 0).toISOString(), status: 'FAILED', errorMessage: 'Invalid email format' },
-                { id: 12, recipientEmail: 'user12@example.com', subject: 'Alert: AML Review', sentAt: new Date(2025, 6, 7, 9, 0).toISOString(), status: 'SENT', errorMessage: null },
+        
+        // --- Fonctions de simulation ---
+        function simulateAlertsData(params) {
+            console.log("Returning SIMULATED alerts data.");
+            const allSimulatedAlerts = [
+                { id: 1, dateAlerte: new Date(2025, 6, 15, 10, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Jean Dupont', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction suspecte', tiersIdClientDb: 'CLIENT001', commentairesTraitement: 'Alerte initiale' },
+                { id: 2, dateAlerte: new Date(2025, 6, 14, 14, 30).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Tech Solutions Inc.', typeAlerte: 'PEP', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Partie exposée politiquement', tiersIdClientDb: 'CLIENT002', commentairesTraitement: 'En attente de documents' },
+                { id: 3, dateAlerte: new Date(2025, 6, 13, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Alice Wonderland', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'Transaction avec pays du tiers (Wonderland)', tiersIdClientDb: 'CLIENT003', commentairesTraitement: 'Faux positif confirmé' },
+                { id: 4, dateAlerte: new Date(2025, 6, 12, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Bob Builder', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Vérification de sanctions', tiersIdClientDb: 'CLIENT004', commentairesTraitement: 'Nouvelle alerte' },
+                { id: 5, dateAlerte: new Date(2025, 6, 11, 16, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'DataCorp Ltd.', typeAlerte: 'PEP', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'PEP avérée', tiersIdClientDb: 'CLIENT005', commentairesTraitement: 'Résolue: Vrai positif' },
+                { id: 6, dateAlerte: new Date(2025, 6, 10, 8, 45).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Charlie Chaplin', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Transaction avec pays du tiers (Sillyville)', tiersIdClientDb: 'CLIENT006', commentairesTraitement: 'En attente d\'analyse' },
+                { id: 7, dateAlerte: new Date(2025, 6, 9, 13, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Diana Prince', typeAlerte: 'Sanction', statutAlerte: 'En cours de traitement', descriptionAlerte: 'Alerte pour suspicion de blanchiment', tiersIdClientDb: 'CLIENT007', commentairesTraitement: 'Investigation en cours' },
+                { id: 8, dateAlerte: new Date(2025, 6, 8, 10, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'CodeMasters', typeAlerte: 'Other', statutAlerte: 'Ouverte', descriptionAlerte: 'Activité inhabituelle', tiersIdClientDb: 'CLIENT008', commentairesTraitement: 'Signalement client' },
+                { id: 9, dateAlerte: new Date(2025, 6, 7, 17, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Eve Harrington', typeAlerte: 'PEP', statutAlerte: 'Fermée - Faux positif', descriptionAlerte: 'False positive PEP match', tiersIdClientDb: 'CLIENT009', commentairesTraitement: 'Analyse manuelle: faux positif' },
+                { id: 10, dateAlerte: new Date(2025, 6, 6, 11, 0).toISOString(), clientCabinetName: 'Bijouterie', nomTiers: 'Frank Castle', typeAlerte: 'Sanction', statutAlerte: 'Ouverte', descriptionAlerte: 'Sanction list match', tiersIdClientDb: 'CLIENT010', commentairesTraitement: 'Vérification en attente' },
+                { id: 11, dateAlerte: new Date(2025, 6, 5, 14, 0).toISOString(), clientCabinetName: 'ESN', denominationSocialeTiers: 'Global Innovations', typeAlerte: 'Other', statutAlerte: 'Fermée - Vrai positif', descriptionAlerte: 'Résolu après investigation', tiersIdClientDb: 'CLIENT011', commentairesTraitement: 'Résolue: Vrai positif confirmé' },
+                { id: 12, dateAlerte: new Date(2025, 6, 4, 9, 0).toISOString(), clientCabinetName: 'Fringues', nomTiers: 'Grace Hopper', typeAlerte: 'PaysNonCooperant', statutAlerte: 'Ouverte', descriptionAlerte: 'Pays non coopérant détecté', tiersIdClientDb: 'CLIENT012', commentairesTraitement: 'Première analyse' },
             ];
 
-            const totalElements = allSimulatedLogs.length;
+            let filteredAlerts = allSimulatedAlerts.filter(alert => {
+                const statusMatch = params.status && params.status !== '' ? alert.statutAlerte === params.status : true;
+                const clientMatch = params.clientId && params.clientId !== '' ? alert.clientCabinetName === params.clientId : true;
+                return statusMatch && clientMatch;
+            });
+
+            filteredAlerts.sort((a, b) => {
+                let comparison = 0;
+                if (params.sortBy === 'dateAlerte') {
+                    const dateA = new Date(a.dateAlerte).getTime();
+                    const dateB = new Date(b.dateAlerte).getTime();
+                    comparison = dateA - dateB;
+                } else if (params.sortBy === 'clientCabinetName') {
+                    comparison = a.clientCabinetName.localeCompare(b.clientCabinetName);
+                }
+                return params.sortDir === 'desc' ? comparison * -1 : comparison;
+            });
+            
+            const totalElements = filteredAlerts.length;
             const totalPages = Math.ceil(totalElements / params.size);
             const startIndex = params.page * params.size;
             const endIndex = Math.min(startIndex + params.size, totalElements);
-            const content = allSimulatedLogs.slice(startIndex, endIndex);
-
-            return new Promise(resolve => setTimeout(() => resolve({
+            const content = filteredAlerts.slice(startIndex, endIndex);
+            
+            return {
                 content: content,
                 pageable: {
                     pageNumber: params.page,
                     pageSize: params.size,
-                    totalElements: totalElements,
-                    totalPages: totalPages,
-                    last: params.page >= totalPages - 1,
-                    numberOfElements: content.length
+                    sort: { empty: false, sorted: true, unsorted: false },
+                    offset: startIndex,
+                    paged: true,
+                    unpaged: false
                 },
-                totalElements: totalElements,
+                last: params.page >= totalPages - 1,
                 totalPages: totalPages,
-                last: params.page >= totalPages - 1
-            }), 300));
+                totalElements: totalElements,
+                first: params.page === 0,
+                size: params.size,
+                number: params.page,
+                sort: { empty: false, sorted: true, unsorted: false },
+                numberOfElements: content.length,
+                empty: content.length === 0
+            };
         }
 
-        function renderEmailLogsTable(logs) {
-            const tableBody = document.getElementById('emailLogsTableBody');
-            if (!tableBody) { console.error("Element #emailLogsTableBody not found."); return; }
-            tableBody.innerHTML = '';
-
-            if (logs.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Aucun log d'e-mail trouvé.</td></tr>`;
-                return;
-            }
-
-            logs.forEach(log => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${log.id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.sentAt).toLocaleString()}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.recipientEmail}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.subject}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.status === 'SENT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${log.status}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.errorMessage || 'N/A'}</td>
-                `;
-                tableBody.appendChild(row);
-            });
+        function simulateAlertDetailsData(alertId) {
+             const simulatedAlert = simulateAlertsData({ page: 0, size: 99999 }).content.find(a => a.id === alertId);
+             if (simulatedAlert) {
+                 return new Promise(resolve => setTimeout(() => resolve(simulatedAlert), 300));
+             } else {
+                 return new Promise((resolve, reject) => setTimeout(() => reject(new Error(`Alerte simulée avec l'ID ${alertId} non trouvée.`)), 300));
+             }
         }
-
-        function updateEmailLogPagination(pageable, totalElements) {
-            const currentPageStart = document.getElementById('currentEmailLogPageStart');
-            const currentPageEnd = document.getElementById('currentEmailLogPageEnd');
-            const totalResults = document.getElementById('totalEmailLogResults');
-            const prevPageBtn = document.getElementById('prevEmailLogPage');
-            const nextPageBtn = document.getElementById('nextEmailLogPage');
-            const prevPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
-            const nextPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
-            const pageNumbersContainer = document.getElementById('emailLogPageNumbers');
-
-            if (currentPageStart) currentPageStart.textContent = totalElements === 0 ? 0 : (pageable.pageNumber * pageable.pageSize) + 1;
-            if (currentPageEnd) currentPageEnd.textContent = totalElements === 0 ? 0 : Math.min(((pageable.pageNumber * pageable.pageSize) + pageable.numberOfElements), totalElements);
-            if (totalResults) totalResults.textContent = totalElements;
-
-            if (prevPageBtn) prevPageBtn.disabled = pageable.pageNumber === 0;
-            if (prevPageMobileBtn) prevPageMobileBtn.disabled = pageable.pageNumber === 0;
-            if (nextPageBtn) nextPageBtn.disabled = pageable.last;
-            if (nextPageMobileBtn) nextPageMobileBtn.disabled = pageable.last;
-
-            const paginationControls = document.querySelector('#emailLogsSection .px-4.py-3.bg-gray-50');
-            if (paginationControls) {
-                if (totalElements <= pageable.pageSize && pageable.pageNumber === 0) {
-                    paginationControls.classList.add('hidden');
-                } else {
-                    paginationControls.classList.remove('hidden');
-                }
-            }
-
-            if (pageNumbersContainer) {
-                pageNumbersContainer.innerHTML = '';
-                const totalPages = pageable.totalPages;
-                for (let i = 0; i < totalPages; i++) {
-                    const pageButton = document.createElement('button');
-                    pageButton.textContent = i + 1;
-                    pageButton.className = `relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${i === pageable.pageNumber ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
-                    pageButton.addEventListener('click', () => {
-                        currentEmailLogFilters.page = i;
-                        loadEmailLogs();
-                    });
-                    pageNumbersContainer.appendChild(pageButton);
-                }
-            }
-        }
-
-        async function loadEmailLogs() {
-            showLoading();
-            fetchEmailLogs(currentEmailLogFilters)
-                .then(response => {
-                    renderEmailLogsTable(response.content);
-                    updateEmailLogPagination(response.pageable, response.totalElements);
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement des logs d\'e-mail:', error);
-                    console.warn("L'API réelle des logs d'e-mail n'a pas pu être contactée. Affichage des données simulées.");
-                })
-                .finally(() => {
-                    hideLoading();
-                });
-        }
-
-        // Nouvelle fonction pour déclencher le scan
-        async function triggerScan() {
-            showLoading();
-            try {
-                // Remplacez '/api/admin/trigger-scan' par l'endpoint réel de votre backend
-                const url = `${API_BASE_URL}/api/admin/trigger-scan`;
-                console.log(`Attempting to trigger scan at: ${url}`); // Ajout d'un log
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const message = await response.text(); // Ou response.json() si votre backend renvoie du JSON
-                    alert(`Scan déclenché avec succès : ${message}`);
-                    console.log("Scan triggered successfully:", message);
-                    loadAlerts(); // Recharger les alertes après le scan pour voir les nouvelles
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`Erreur lors du déclenchement du scan: ${response.status} - ${errorText}`);
-                }
-            } catch (error) {
-                console.error("Impossible de déclencher le scan:", error);
-                alert('Erreur: Le scan n\'a pas pu être déclenché. Vérifiez la console pour plus de détails.');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // --- Gestion des sections de contenu ---
-        function showSection(sectionId) {
-            // Masquer toutes les sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-
-            // Afficher la section cible
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-
-
-            // Mettre à jour le titre principal
-            const mainContentTitle = document.getElementById('mainContentTitle');
-            if (mainContentTitle) {
-                if (sectionId === 'dashboardSection') {
-                    mainContentTitle.textContent = 'AML Alert Dashboard';
-                } else if (sectionId === 'alertsSection') {
-                    mainContentTitle.textContent = 'Alerts Overview';
-                } else if (sectionId === 'emailLogsSection') {
-                    mainContentTitle.textContent = 'Email Sending Logs';
-                }
-            }
-
-            // Mettre à jour l'état actif dans la sidebar
-            document.querySelectorAll('nav a').forEach(link => {
-                link.classList.remove('bg-blue-50', 'text-primary');
-                link.classList.add('text-gray-700', 'hover:bg-gray-100');
-            });
-
-            const activeLink = document.getElementById(sectionId.replace('Section', 'Link'));
-            if (activeLink) {
-                activeLink.classList.remove('text-gray-700', 'hover:bg-gray-100');
-                activeLink.classList.add('bg-blue-50', 'text-primary');
-            }
-
-            // Recharger les données spécifiques à la section si nécessaire
-            if (sectionId === 'alertsSection') {
-                loadAlerts(); // Recharger les alertes lorsque la section Alertes est affichée
-            } else if (sectionId === 'emailLogsSection') {
-                loadEmailLogs(); // Recharger les logs d'e-mail lorsque la section Email Logs est affichée
-            } else if (sectionId === 'dashboardSection') { // NOUVEAU: Charger les données du dashboard au début
-                 loadAlerts(); // Le dashboard utilise aussi les données d'alertes pour les cartes et graphiques
-            }
-        }
-
-        // --- Initialisation des écouteurs d'événements UI ---
-        function initializeUIEventListeners() {
-            // Assigner les éléments DOM aux variables globales après que le DOM soit chargé
-            modal = document.getElementById('alertModal');
-            closeModal = document.getElementById('closeModal');
-            cancelModal = document.getElementById('cancelModal');
-            saveChangesBtn = document.getElementById('saveChangesBtn');
-            resendEmailBtn = document.getElementById('resendEmailBtn');
-            // Assignation du nouveau bouton de scan
-            triggerScanBtn = document.getElementById('triggerScanBtn'); // Assigner ici
-
-
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    document.querySelector('.sidebar').classList.toggle('open');
-                });
-            } else { console.error("Element #sidebarToggle not found."); }
-
-            const prevPageBtn = document.getElementById('prevPage');
-            if (prevPageBtn) {
-                prevPageBtn.addEventListener('click', () => {
-                    if (currentFilters.page > 0) {
-                        currentFilters.page--;
-                        loadAlerts();
-                    }
-                });
-            } else { console.error("Element #prevPage not found."); }
-
-            const nextPageBtn = document.getElementById('nextPage');
-            if (nextPageBtn) {
-                nextPageBtn.addEventListener('click', () => {
-                    currentFilters.page++;
-                    loadAlerts();
-                });
-            } else { console.error("Element #nextPage not found."); }
-
-            const prevPageMobileBtn = document.getElementById('prevPageMobile');
-            if (prevPageMobileBtn) {
-                prevPageMobileBtn.addEventListener('click', () => {
-                    if (currentFilters.page > 0) {
-                        currentFilters.page--;
-                        loadAlerts();
-                    }
-                });
-            } else { console.error("Element #prevPageMobile not found."); }
-
-            const nextPageMobileBtn = document.getElementById('nextPageMobile');
-            if (nextPageMobileBtn) {
-                nextPageMobileBtn.addEventListener('click', () => {
-                    currentFilters.page++;
-                    loadAlerts();
-                });
-            } else { console.error("Element #nextPageMobile not found."); }
-
-            const filterButton = document.getElementById('filterButton');
-            if (filterButton) {
-                filterButton.addEventListener('click', () => {
-                    currentFilters.clientId = document.getElementById('filterClient').value;
-                    currentFilters.status = document.getElementById('filterStatus').value;
-                    currentFilters.page = 0; // Reset to first page on filter change
-                    loadAlerts();
-                });
-            } else { console.error("Element #filterButton not found."); }
-
-            document.querySelectorAll('th[data-sort-by]').forEach(header => {
-                header.addEventListener('click', () => {
-                    const sortBy = header.dataset.sortBy;
-                    if (currentFilters.sortBy === sortBy) {
-                        currentFilters.sortDir = currentFilters.sortDir === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        currentFilters.sortBy = sortBy;
-                        currentFilters.sortDir = 'desc'; // Default sort direction for new sort column
-                    }
-                    loadAlerts();
-                });
-            });
-
-            if (saveChangesBtn) {
-                saveChangesBtn.addEventListener('click', async () => {
-                    if (!currentAlertId) return;
-
-                    const newCommentText = document.getElementById('newComment').value;
-                    const newStatusValue = document.getElementById('changeStatusSelect').value;
-
-                    if (!newCommentText && !newStatusValue) {
-                        alert('Veuillez ajouter un commentaire ou changer le statut.');
-                        return;
-                    }
-
-                    try {
-                        const updatedAlert = await updateAlertStatus(currentAlertId, newStatusValue, newCommentText); // APPEL API RÉEL
-                        alert('Alerte mise à jour avec succès !');
-                        if (modal) modal.classList.add('hidden');
-                        loadAlerts(); // Reload table to reflect changes
-                    } catch (error) {
-                        alert('Erreur lors de la mise à jour de l\'alerte: ' + error.message);
-                        console.error(error);
-                    }
-                });
-            } else { console.error("Element #saveChangesBtn not found."); }
-
-            if (resendEmailBtn) {
-                resendEmailBtn.addEventListener('click', async () => {
-                    if (!currentAlertId) return;
-
-                    if (!confirm('Êtes-vous sûr de vouloir renvoyer l\'e-mail pour cette alerte ?')) {
-                        return;
-                    }
-
-                    try {
-                        const responseText = await resendAlertEmail(currentAlertId); // APPEL API RÉEL
-                        alert('E-mail de renvoi : ' + responseText);
-                    } catch (error) {
-                        alert('Erreur lors du renvoi de l\'e-mail : ' + error.message);
-                        console.error(error);
-                    }
-                });
-            } else { console.error("Element #resendEmailBtn not found."); }
-
-
-            if (closeModal) {
-                closeModal.addEventListener('click', function() {
-                    if (modal) modal.classList.add('hidden');
-                });
-            } else { console.error("Element #closeModal not found."); }
-
-            if (cancelModal) {
-                cancelModal.addEventListener('click', function() {
-                    if (modal) modal.classList.add('hidden');
-                });
-            } else { console.error("Element #cancelModal not found."); }
-
-            if (modal) {
-                window.addEventListener('click', function(event) {
-                    if (event.target === modal) {
-                        modal.classList.add('hidden');
-                    }
-                });
-            } else { console.error("Element #alertModal not found."); }
-
-            const prevEmailLogPageBtn = document.getElementById('prevEmailLogPage');
-            if (prevEmailLogPageBtn) {
-                prevEmailLogPageBtn.addEventListener('click', () => {
-                    if (currentEmailLogFilters.page > 0) {
-                        currentEmailLogFilters.page--;
-                        loadEmailLogs();
-                    }
-                });
-            }
-
-            const nextEmailLogPageBtn = document.getElementById('nextEmailLogPage');
-            if (nextEmailLogPageBtn) {
-                nextEmailLogPageBtn.addEventListener('click', () => {
-                    currentEmailLogFilters.page++;
-                    loadEmailLogs();
-                });
-            }
-
-            const prevEmailLogPageMobileBtn = document.getElementById('prevEmailLogPageMobile');
-            if (prevEmailLogPageMobileBtn) {
-                prevEmailLogPageMobileBtn.addEventListener('click', () => {
-                    if (currentEmailLogFilters.page > 0) {
-                        currentEmailLogFilters.page--;
-                        loadEmailLogs();
-                    }
-                });
-            }
-
-            const nextEmailLogPageMobileBtn = document.getElementById('nextEmailLogPageMobile');
-            if (nextEmailLogPageMobileBtn) {
-                nextEmailLogPageMobileBtn.addEventListener('click', () => {
-                    currentEmailLogFilters.page++;
-                    loadEmailLogs();
-                });
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeCharts();
-            initializeUIEventListeners();
-
-            // Écouteur pour le nouveau bouton de scan
-            if (triggerScanBtn) { // Vérifier si le bouton a été assigné
-                triggerScanBtn.addEventListener('click', triggerScan);
-            } else {
-                console.error("Element #triggerScanBtn not found during DOMContentLoaded.");
-            }
-
-            document.getElementById('dashboardLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                showSection('dashboardSection');
-            });
-
-            document.getElementById('alertsLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                showSection('alertsSection');
-            });
-
-            document.getElementById('emailLogsLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                showSection('emailLogsSection');
-            });
-
-            showSection('dashboardSection');
-        });
     </script>
 </body>
 </html>
